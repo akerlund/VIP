@@ -1,0 +1,1 @@
+source build_normal.tcl -notrace
