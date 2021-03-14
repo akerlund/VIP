@@ -1,0 +1,11 @@
+module_path=$git_root/examples/vip_axi4_agent
+
+rtl_dirs+="
+  +incdir+$module_path/rtl
+"
+
+rtl_files+="
+  $module_path/rtl/axi_cfg_if.sv
+  $module_path/rtl/axi4_address_pkg.sv
+  $module_path/rtl/axi4_axi_slave.sv
+"

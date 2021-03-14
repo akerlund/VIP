@@ -1,0 +1,42 @@
+axi4:
+
+  bus_width: 64
+
+  full_name: AXI4_EXAMPLE
+
+  registers:
+
+    - name:   command
+      desc:   Command register
+      access: WO
+      bit_fields:
+        - field: {
+          name:        cmd_command,
+          description: Command bit,
+          size:        1,
+          lsb_pos:     0,
+          reset_value: 0x0
+        }
+
+    - name:   configuration
+      desc:   Configuration register
+      access: RW
+      bit_fields:
+        - field: {
+          name:        cr_configuration,
+          description: Configuration register,
+          size:        64,
+          lsb_pos:     0,
+          reset_value: 0x0
+        }
+
+    - name:   status
+      desc:   Status register
+      access: RO
+      bit_fields:
+        - field: {
+          name:        sr_status,
+          description: Status register,
+          size:        64,
+          lsb_pos:     0
+        }
