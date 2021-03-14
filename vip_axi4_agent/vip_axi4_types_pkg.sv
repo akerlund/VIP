@@ -32,26 +32,26 @@ package vip_axi4_types_pkg;
   localparam int VIP_AXI4_4K_ADDRESS_BOUNDARY_C = 4096;
 
   // Burst codes
-  localparam logic [1 : 0] VIP_AXI4_BURST_FIXED_C    = 2'b00;
-  localparam logic [1 : 0] VIP_AXI4_BURST_INCR_C     = 2'b01;
-  localparam logic [1 : 0] VIP_AXI4_BURST_WRAP_C     = 2'b10;
-  localparam logic [1 : 0] VIP_AXI4_BURST_RESERVED_C = 2'b11;
+  localparam logic unsigned [1 : 0] VIP_AXI4_BURST_FIXED_C    = 2'b00;
+  localparam logic unsigned [1 : 0] VIP_AXI4_BURST_INCR_C     = 2'b01;
+  localparam logic unsigned [1 : 0] VIP_AXI4_BURST_WRAP_C     = 2'b10;
+  localparam logic unsigned [1 : 0] VIP_AXI4_BURST_RESERVED_C = 2'b11;
 
   // Response codes
-  localparam logic [1 : 0] VIP_AXI4_RESP_OK_C        = 2'b00;
-  localparam logic [1 : 0] VIP_AXI4_RESP_EXOK_C      = 2'b01;
-  localparam logic [1 : 0] VIP_AXI4_RESP_SLVERR_C    = 2'b10;
-  localparam logic [1 : 0] VIP_AXI4_RESP_DECERR_C    = 2'b11;
+  localparam logic unsigned [1 : 0] VIP_AXI4_RESP_OK_C        = 2'b00;
+  localparam logic unsigned [1 : 0] VIP_AXI4_RESP_EXOK_C      = 2'b01;
+  localparam logic unsigned [1 : 0] VIP_AXI4_RESP_SLVERR_C    = 2'b10;
+  localparam logic unsigned [1 : 0] VIP_AXI4_RESP_DECERR_C    = 2'b11;
 
   // Burst size encoding
-  localparam logic [2 : 0] VIP_AXI4_SIZE_1B_C        = 3'b000;
-  localparam logic [2 : 0] VIP_AXI4_SIZE_2B_C        = 3'b001;
-  localparam logic [2 : 0] VIP_AXI4_SIZE_4B_C        = 3'b010;
-  localparam logic [2 : 0] VIP_AXI4_SIZE_8B_C        = 3'b011;
-  localparam logic [2 : 0] VIP_AXI4_SIZE_16B_C       = 3'b100;
-  localparam logic [2 : 0] VIP_AXI4_SIZE_32B_C       = 3'b101;
-  localparam logic [2 : 0] VIP_AXI4_SIZE_64B_C       = 3'b110;
-  localparam logic [2 : 0] VIP_AXI4_SIZE_128B_C      = 3'b111;
+  localparam logic unsigned [2 : 0] VIP_AXI4_SIZE_1B_C        = 3'b000;
+  localparam logic unsigned [2 : 0] VIP_AXI4_SIZE_2B_C        = 3'b001;
+  localparam logic unsigned [2 : 0] VIP_AXI4_SIZE_4B_C        = 3'b010;
+  localparam logic unsigned [2 : 0] VIP_AXI4_SIZE_8B_C        = 3'b011;
+  localparam logic unsigned [2 : 0] VIP_AXI4_SIZE_16B_C       = 3'b100;
+  localparam logic unsigned [2 : 0] VIP_AXI4_SIZE_32B_C       = 3'b101;
+  localparam logic unsigned [2 : 0] VIP_AXI4_SIZE_64B_C       = 3'b110;
+  localparam logic unsigned [2 : 0] VIP_AXI4_SIZE_128B_C      = 3'b111;
 
   `ifndef BOOL_T
   `define BOOL_T

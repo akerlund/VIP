@@ -197,11 +197,11 @@ class vip_axi4_monitor #(
         wdata_beats.push_back(vif.wdata);
         wstrb_beats.push_back(vif.wstrb);
         wuser_beats.push_back(vif.wuser);
-        //beat_counter++;
       end
 
       if (vif.wlast === '1 && vif.wvalid === '1 && vif.wready === '1) begin
 
+        wdata_item = new();
         wdata_item = awaddr_items.pop_front();
 
         wdata_item.wdata = new[wdata_beats.size()];
@@ -210,6 +210,9 @@ class vip_axi4_monitor #(
         foreach (wdata_item.wdata[i]) begin wdata_item.wdata[i] = wdata_beats[i]; end
         foreach (wdata_item.wstrb[i]) begin wdata_item.wstrb[i] = wstrb_beats[i]; end
         foreach (wdata_item.wuser[i]) begin wdata_item.wuser[i] = wuser_beats[i]; end
+        wdata_beats.delete();
+        wstrb_beats.delete();
+        wuser_beats.delete();
 
         `uvm_info(get_name(), $sformatf("Collected Write Data Channel:\n%s", wdata_item.sprint()), UVM_HIGH)
 

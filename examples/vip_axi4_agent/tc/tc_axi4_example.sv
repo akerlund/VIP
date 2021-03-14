@@ -37,7 +37,7 @@ class tc_axi4_example extends axi4_base_test;
 
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
-    axi4_mem_cfg0.mem_addr_width = VIP_AXI4_MEM_SIZE_4KB_E;
+    axi4_mem_cfg0.mem_addr_width = 64;//AXI4_ADDR_WIDTH_C;
   endfunction
 
 
@@ -137,15 +137,21 @@ class tc_axi4_example extends axi4_base_test;
     rd_responses = vip_axi4_read_seq0.get_rd_responses();
     for (int i = 0; i < rd_responses.size(); i++) begin
       rd_response = rd_responses[i];
+      if (!ok) begin
+        break;
+      end
       for (int j = 0; j < rd_response.rdata.size(); j++) begin
         if (i*16+j+counter_start != rd_response.rdata[j]) begin
           `uvm_error(get_name(), $sformatf("%0d != %0d", i*16+j,rd_response.rdata[j]))
           ok = FALSE;
+          break;
         end
       end
     end
     if (ok) begin
       `uvm_info(get_name(), $sformatf("Counter check ok"), UVM_LOW)
+    end else begin
+      `uvm_error(get_name(), $sformatf("Counter check failed"))
     end
   endtask
 

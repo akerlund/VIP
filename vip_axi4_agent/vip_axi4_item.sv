@@ -154,7 +154,6 @@ class vip_axi4_item #(
 
   endfunction
 
-
   constraint con_awid {
     if (cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) {
       awid >= cfg.min_id;
@@ -191,18 +190,18 @@ class vip_axi4_item #(
     }
   }
 
-  constraint con_awburst {
-    if (cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) {
-      awburst >= cfg.min_burst;
-      awburst <= cfg.max_burst;
-    }
-  }
+  //constraint con_awburst { // BROKEN
+  //  if (cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) {
+  //    awburst >= cfg.min_burst;
+  //    awburst <= cfg.max_burst;
+  //  }
+  //}
 
   constraint con_wdata_size {
     if (cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) {
       wdata.size == awlen + 1;
     } else {
-      wdata.size == '0;
+      wdata.size == 0;
     }
   }
 
@@ -301,18 +300,18 @@ class vip_axi4_item #(
     }
   }
 
-  constraint con_arburst {
-    if (cfg.axi4_access == VIP_AXI4_RD_REQUEST_E) {
-      arburst >= cfg.min_burst;
-      arburst <= cfg.max_burst;
-    }
-  }
+  //constraint con_arburst {
+  //  if (cfg.axi4_access == VIP_AXI4_RD_REQUEST_E) {
+  //    arburst >= cfg.min_burst;
+  //    arburst <= cfg.max_burst;
+  //  }
+  //}
 
   constraint con_rdata_size {
     if (cfg.axi4_access == VIP_AXI4_RD_RESPONSE_E) {
       rdata.size == arlen + 1;
     } else {
-      rdata.size == '0;
+      rdata.size == 0;
     }
   }
 
@@ -334,7 +333,7 @@ class vip_axi4_item #(
     if (cfg.axi4_access == VIP_AXI4_RD_RESPONSE_E) {
       ruser.size == arlen + 1;
     } else {
-      ruser.size == '0;
+      ruser.size == 0;
     }
   }
 

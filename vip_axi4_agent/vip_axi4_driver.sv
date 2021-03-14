@@ -48,7 +48,7 @@ class vip_axi4_driver #(
 
   // Memory
   protected logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] _memory [mem_addr_type_t];
-  protected int                                       _memory_size;
+  protected longint                                   _memory_depth;
   protected logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] _write_row;
             int                                       ooo_counter;
 
@@ -98,7 +98,10 @@ class vip_axi4_driver #(
 
     if (cfg.vip_axi4_agent_type == VIP_AXI4_SLAVE_AGENT_E) begin
       if (cfg.mem_addr_width != 0) begin
-        _memory_size = (2**cfg.mem_addr_width)/CFG_P.VIP_AXI4_STRB_WIDTH_P;
+        _memory_depth = 2**(cfg.mem_addr_width-$clog2(CFG_P.VIP_AXI4_STRB_WIDTH_P));
+        if (_memory_depth == 0) begin
+          `uvm_fatal("RANGE", $sformatf("The memory depth was calculated to (%0d)", _memory_depth))
+        end
       end
     end
   endfunction
@@ -745,8 +748,8 @@ class vip_axi4_driver #(
           end
         end
 
-        if (memory_start_index > (_memory_size-1) || memory_stop_index > _memory_size) begin
-          `uvm_fatal(get_name(), $sformatf("MEM: Memory range undefined (%0d - %0d)", memory_start_index, memory_stop_index))
+        if (memory_start_index > (_memory_depth-1) || memory_stop_index > _memory_depth) begin
+          `uvm_fatal(get_name(), $sformatf("MEM: Memory range undefined (%0d - %0d) > (%0d)", memory_start_index, memory_stop_index, _memory_depth))
         end
 
         // Writing the data to memory
@@ -850,7 +853,7 @@ class vip_axi4_driver #(
       read_range       = unsigned'(read_item.arlen) + 1;
       read_stop_index  = read_start_index + read_range;
 
-      if (read_start_index > (_memory_size-1) || read_stop_index > _memory_size) begin
+      if (read_start_index > (_memory_depth-1) || read_stop_index > _memory_depth) begin
         `uvm_fatal(get_name(), $sformatf("MEM: Memory range undefined (%0d - %0d)", read_start_index, read_stop_index))
       end
 
