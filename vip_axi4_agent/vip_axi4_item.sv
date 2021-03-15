@@ -81,7 +81,7 @@ class vip_axi4_item #(
     `uvm_field_int(awid,         UVM_DEFAULT)
     `uvm_field_int(awaddr,       UVM_DEFAULT)
     `uvm_field_int(awlen,        UVM_DEFAULT)
-    `uvm_field_int(awburst,      UVM_DEFAULT)
+    `uvm_field_int(awsize,       UVM_DEFAULT)
     `uvm_field_int(awburst,      UVM_DEFAULT)
     `uvm_field_int(awlock,       UVM_DEFAULT)
     `uvm_field_int(awcache,      UVM_DEFAULT)
@@ -89,12 +89,12 @@ class vip_axi4_item #(
     `uvm_field_int(awqos,        UVM_DEFAULT)
     `uvm_field_int(awregion,     UVM_DEFAULT)
     `uvm_field_int(awuser,       UVM_DEFAULT)
-    `uvm_field_int(bid,          UVM_DEFAULT)
-    `uvm_field_int(bresp,        UVM_DEFAULT)
-    `uvm_field_int(buser,        UVM_DEFAULT)
     `uvm_field_sarray_int(wdata, UVM_DEFAULT)
     `uvm_field_sarray_int(wstrb, UVM_DEFAULT)
     `uvm_field_sarray_int(wuser, UVM_DEFAULT)
+    `uvm_field_int(bid,          UVM_DEFAULT)
+    `uvm_field_int(bresp,        UVM_DEFAULT)
+    `uvm_field_int(buser,        UVM_DEFAULT)
     `uvm_field_int(arid,         UVM_DEFAULT)
     `uvm_field_int(araddr,       UVM_DEFAULT)
     `uvm_field_int(arlen,        UVM_DEFAULT)
@@ -158,6 +158,8 @@ class vip_axi4_item #(
     if (cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) {
       awid >= cfg.min_id;
       awid <= cfg.max_id;
+    } else {
+      awid == 0;
     }
   }
 
@@ -169,6 +171,8 @@ class vip_axi4_item #(
       //   araddr < 4096 -  1 * 16 = 4080
       //   araddr < 4096 - 16 * 16 = 3840
       awaddr[11 : 0] <= VIP_AXI4_4K_ADDRESS_BOUNDARY_C - ((unsigned'(awlen) + 1) * CFG_P.VIP_AXI4_STRB_WIDTH_P);
+    } else {
+      awaddr == 0;
     }
   }
 
@@ -176,6 +180,8 @@ class vip_axi4_item #(
     if (cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) {
       awburst >= cfg.min_burst;
       awburst <= cfg.max_burst;
+    } else {
+      awburst == 0;
     }
   }
 
@@ -187,6 +193,8 @@ class vip_axi4_item #(
         awlen >= cfg.min_len;
         awlen <= cfg.max_len;
       }
+    } else {
+      awlen == 0;
     }
   }
 
@@ -194,6 +202,8 @@ class vip_axi4_item #(
     if (cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) {
       awsize >= cfg.min_size;
       awsize <= cfg.max_size;
+    } else {
+      awsize == 0;
     }
   }
 
@@ -276,6 +286,8 @@ class vip_axi4_item #(
       araddr >= cfg.min_addr;
       araddr <= cfg.max_addr;
       araddr[11 : 0] <= VIP_AXI4_4K_ADDRESS_BOUNDARY_C - ((unsigned'(arlen) + 1) * CFG_P.VIP_AXI4_STRB_WIDTH_P);
+    } else {
+      araddr == 0;
     }
   }
 
@@ -283,6 +295,8 @@ class vip_axi4_item #(
     if (cfg.axi4_access == VIP_AXI4_RD_REQUEST_E) {
       arburst >= cfg.min_burst;
       arburst <= cfg.max_burst;
+    } else {
+      arburst == 0;
     }
   }
 
@@ -295,8 +309,7 @@ class vip_axi4_item #(
         arlen <= cfg.max_len;
       }
     } else {
-      arlen >= cfg.min_len;
-      arlen <= cfg.max_len;
+      arlen == 0;
     }
   }
 
@@ -304,6 +317,8 @@ class vip_axi4_item #(
     if (cfg.axi4_access == VIP_AXI4_RD_REQUEST_E) {
       arsize >= cfg.min_size;
       arsize <= cfg.max_size;
+    } else {
+      arsize == 0;
     }
   }
 

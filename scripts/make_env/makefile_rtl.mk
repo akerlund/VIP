@@ -10,6 +10,7 @@ PYRG_DIR?=$(shell pwd)/pyrg
 UVM_TR_RECORD?=UVM_HIGH
 UVM_VERBOSITY?=LOW
 VIV_OOC?=1
+GUI?=0
 
 # Define Vivado options
 VIV_BUILD=0
@@ -88,7 +89,7 @@ list:
 	@for tc in $(TC_LIST); do echo " $$tc"; done
 
 $(TC_LIST): tc_%: ${RUN_DIR}
-	@$(RUN_XSIM) $(RUN_DIR) $(@) $(UVM_VERBOSITY)
+	@$(RUN_XSIM) $(RUN_DIR) $(@) $(UVM_VERBOSITY) $(GUI)
 
 clean:
 	@echo "Removing ${RUN_DIR}"

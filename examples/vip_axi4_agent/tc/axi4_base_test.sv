@@ -28,7 +28,7 @@ class axi4_base_test extends uvm_test;
   // ---------------------------------------------------------------------------
 
   uvm_table_printer uvm_table_printer0;
-  //report_server     report_server0;
+  report_server     report_server0;
 
   // ---------------------------------------------------------------------------
   // Testbench variables
@@ -73,8 +73,8 @@ class axi4_base_test extends uvm_test;
     // UVM
     uvm_config_db #(uvm_verbosity)::set(this, "*", "recording_detail", UVM_FULL);
 
-    //report_server0 = new("report_server0");
-    //uvm_report_server::set_server(report_server0);
+    report_server0 = new("report_server0");
+    uvm_report_server::set_server(report_server0);
 
     uvm_table_printer0                     = new();
     uvm_table_printer0.knobs.depth         = 3;

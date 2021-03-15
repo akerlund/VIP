@@ -28,7 +28,7 @@ package vip_axi4_types_pkg;
   // AXI4 specification defines
   // ---------------------------------------------------------------------------
 
-  localparam int VIP_AXI4_MAX_BURST_LENGTH_C    = 256;
+  localparam int VIP_AXI4_MAX_LENGTH_C          = 256;
   localparam int VIP_AXI4_4K_ADDRESS_BOUNDARY_C = 4096;
 
   // Burst codes

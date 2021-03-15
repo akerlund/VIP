@@ -94,6 +94,13 @@ class vip_axi4_base_seq extends uvm_sequence #(vip_axi4_item #(VIP_AXI4_CFG_C));
 
   protected function void set_axi4_access(vip_axi4_access_t axi4_access);
     _cfg.axi4_access = axi4_access;
+    if (axi4_access == VIP_AXI4_WR_REQUEST_E) begin
+      set_log_access_type("Write");
+    end else if (axi4_access == VIP_AXI4_RD_REQUEST_E) begin
+      set_log_access_type("Read");
+    end else begin
+      set_log_access_type("Response");
+    end
   endfunction
 
 
@@ -197,10 +204,6 @@ class vip_axi4_base_seq extends uvm_sequence #(vip_axi4_item #(VIP_AXI4_CFG_C));
 
     if (_combine_requests == TRUE) begin
 
-      if (_cfg.axi4_access == VIP_AXI4_RD_RESPONSE_E) begin
-        `uvm_fatal(get_name(), $sformatf("Combined accesses of VIP_AXI4_RD_RESPONSE_E not supported yet"))
-      end
-
       req = new();
       req.set_config(_cfg);
       req.set_counter_start(_counter);
@@ -227,7 +230,10 @@ class vip_axi4_base_seq extends uvm_sequence #(vip_axi4_item #(VIP_AXI4_CFG_C));
       if (_cfg.axi4_data_type == VIP_AXI4_DATA_CUSTOM_E) begin
         req.set_custom_data(_custom_data);
       end
-      req.randomize();
+
+      if (!req.randomize()) begin
+        `uvm_error(get_name(), $sformatf("randomize() failed"))
+      end
 
       if (_combine_requests == FALSE) begin
         start_item(req);
@@ -249,7 +255,9 @@ class vip_axi4_base_seq extends uvm_sequence #(vip_axi4_item #(VIP_AXI4_CFG_C));
     end
 
     if (_combine_requests == TRUE) begin
-      `uvm_info(get_name(), $sformatf("Starting (%0d) combined requests", _combined_request.size()), UVM_LOW)
+      if (_verbose == TRUE) begin
+        `uvm_info(get_name(), $sformatf("Starting (%0d) combined (%s) requests", _combined_request.size(), _log_access_type), UVM_LOW)
+      end
       req = new();
       req = _combined_request.pop_front();
       req.req_queue = _combined_request;
@@ -300,7 +308,6 @@ class vip_axi4_write_base_seq extends vip_axi4_base_seq;
   endfunction
 
   task body();
-    set_log_access_type("Write");
     set_axi4_access(VIP_AXI4_WR_REQUEST_E);
     super.body();
   endtask
@@ -319,7 +326,6 @@ class vip_axi4_read_base_seq extends vip_axi4_base_seq;
   endfunction
 
   task body();
-    set_log_access_type("Read");
     set_axi4_access(VIP_AXI4_RD_REQUEST_E);
     super.body();
   endtask
@@ -338,7 +344,6 @@ class vip_axi4_response_base_seq extends vip_axi4_base_seq;
   endfunction
 
   task body();
-    set_log_access_type("Response");
     set_axi4_access(VIP_AXI4_RD_RESPONSE_E);
     super.body();
   endtask

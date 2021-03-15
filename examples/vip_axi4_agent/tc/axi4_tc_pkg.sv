@@ -27,6 +27,7 @@ package axi4_tc_pkg;
   import axi4_tb_pkg::*;
 
   // Import testbench and agent packages here
+  import report_server_pkg::*;
   import vip_axi4_types_pkg::*;
   import vip_axi4_agent_pkg::*;
   import clk_rst_types_pkg::*;
@@ -34,7 +35,6 @@ package axi4_tc_pkg;
 
   // Include testcase files here
   `include "axi4_base_test.sv"
-  `include "tc_axi4_example.sv"
-  `include "tc_axi4_adapter.sv"
+  `include "tc_axi4_demonstration.sv"
 
 endpackage

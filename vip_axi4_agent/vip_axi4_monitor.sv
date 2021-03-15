@@ -249,8 +249,6 @@ class vip_axi4_monitor #(
     int                    driver_arid;
     vip_axi4_item #(CFG_P) araddr_item;
     vip_axi4_item #(CFG_P) rdata_item;
-    vip_axi4_item #(CFG_P) rdata_item1;
-    vip_axi4_item #(CFG_P) rdata_item2;
 
     forever begin
 
