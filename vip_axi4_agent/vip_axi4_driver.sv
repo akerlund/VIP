@@ -16,7 +16,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 // Description:
-// TODO: Unaligned memory addresses
+// TODO: Memory: unaligned memory addresses, wrap, size
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -35,7 +35,9 @@ class vip_axi4_driver #(
 
   // Class variables
   protected virtual vip_axi4_if #(CFG_P) vif;
-  protected process driver_process;
+  protected process _driver_process;
+  protected process _wvalid_process;
+  protected process _rvalid_process;
   protected int id;
   vip_axi4_config cfg;
 
@@ -43,8 +45,8 @@ class vip_axi4_driver #(
   protected string    _ev_id;
   protected uvm_event _ev_monitor_wdata;  // Write request
   protected uvm_event _ev_monitor_araddr; // Read request
-  protected vip_axi4_item #(CFG_P) araddr_queue [$];
-  protected vip_axi4_item #(CFG_P) wdata_queue  [$];
+  protected vip_axi4_item #(CFG_P) _araddr_queue [$];
+  protected vip_axi4_item #(CFG_P) _wdata_queue  [$];
 
   // Memory
   protected logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] _memory [mem_addr_type_t];
@@ -53,9 +55,9 @@ class vip_axi4_driver #(
             int                                       ooo_counter;
 
   // Read and Write collision detection
-  logic  [CFG_P.VIP_AXI4_ADDR_WIDTH_P-1 : 0] current_araddr_start;
-  logic  [CFG_P.VIP_AXI4_ADDR_WIDTH_P-1 : 0] current_araddr_stop;
-  bool_t                                     rdata_active;
+  protected logic  [CFG_P.VIP_AXI4_ADDR_WIDTH_P-1 : 0] _current_araddr_start;
+  protected logic  [CFG_P.VIP_AXI4_ADDR_WIDTH_P-1 : 0] _current_araddr_stop;
+  protected bool_t                                     _rdata_active;
 
 
   `uvm_component_param_utils_begin(vip_axi4_driver #(CFG_P))
@@ -133,7 +135,7 @@ class vip_axi4_driver #(
 
     if (cfg.vip_axi4_agent_type == VIP_AXI4_MASTER_AGENT_E) begin
       fork
-        driver_process = process::self();
+        _driver_process = process::self();
         mst_get_and_drive();           // Get Write and Read requests
         drive_rready();                // Can be configured to be delayed
       join
@@ -141,7 +143,7 @@ class vip_axi4_driver #(
     else begin
       if (cfg.mem_slave == TRUE) begin
         fork
-          driver_process = process::self();
+          _driver_process = process::self();
           get_memory_write_requests(); // Passed from the Monitor via events
           drive_awready();             // De-assert awready when we have recieved too much wdata
           drive_wready();              // Can be configured to be delayed
@@ -151,7 +153,7 @@ class vip_axi4_driver #(
         join
       end else begin
         fork
-          driver_process = process::self();
+          _driver_process = process::self();
           slv_get_and_drive();         // Get Response requests
         join
       end
@@ -162,17 +164,18 @@ class vip_axi4_driver #(
   //
   // ---------------------------------------------------------------------------
   function void handle_reset();
-    if (driver_process != null) begin
-      driver_process.kill();
+    if (_driver_process != null) begin
+      _driver_process.kill();
     end
-    araddr_queue.delete();
-    wdata_queue.delete();
-    rdata_active = FALSE;
+    _araddr_queue.delete();
+    _wdata_queue.delete();
+    _rdata_active = FALSE;
     rd_response_fifo.flush();
     if (cfg.vip_axi4_agent_type == VIP_AXI4_SLAVE_AGENT_E && cfg.mem_slave == TRUE) begin
       _ev_monitor_wdata.reset();
       _ev_monitor_araddr.reset();
     end
+    ooo_counter = 0;
   endfunction
 
   // ---------------------------------------------------------------------------
@@ -373,7 +376,10 @@ class vip_axi4_driver #(
 
       if (cfg.wvalid_delay_enabled) begin
         fork
-          drive_wvalid();
+          begin
+            _wvalid_process = process::self();
+            drive_wvalid();
+          end
         join_none
       end else begin
         vif.wvalid <= '1;
@@ -399,7 +405,7 @@ class vip_axi4_driver #(
 
         if (beat_counter == burst_length) begin
           if (cfg.wvalid_delay_enabled) begin
-            disable fork;
+            _wvalid_process.kill();
             vif.wvalid <= '0;
           end
         end
@@ -419,12 +425,8 @@ class vip_axi4_driver #(
     end
 
     _req_queue.delete();
-
     vif.wvalid <= '0;
 
-    if (cfg.wvalid_delay_enabled) begin
-      disable fork;
-    end
   endtask
 
   // ---------------------------------------------------------------------------
@@ -471,7 +473,7 @@ class vip_axi4_driver #(
       @(posedge vif.clk);
 
       if (cfg.mem_awaddr_fifo_size != 0) begin
-        while (wdata_queue.size() >= cfg.mem_awaddr_fifo_size) begin
+        while (_wdata_queue.size() >= cfg.mem_awaddr_fifo_size) begin
           vif.awready <= '0;
           repeat (cfg.mem_awaddr_fifo_size*10) @(posedge vif.clk);
         end
@@ -615,7 +617,7 @@ class vip_axi4_driver #(
       @(posedge vif.clk);
 
       if (cfg.mem_araddr_fifo_size != 0) begin
-        while (araddr_queue.size() >= cfg.mem_araddr_fifo_size) begin
+        while (_araddr_queue.size() >= cfg.mem_araddr_fifo_size) begin
           vif.arready <= '0;
           repeat (cfg.mem_araddr_fifo_size*10) @(posedge vif.clk);
         end
@@ -740,10 +742,10 @@ class vip_axi4_driver #(
 
         // Collision detection
         vif.bresp <= VIP_AXI4_RESP_OK_C;
-        if (rdata_active == TRUE) begin
-          if (wr_req.awaddr >= current_araddr_start &&
-              wr_req.awaddr + wr_req.awlen <= current_araddr_stop) begin
-            `uvm_warning(get_name(), $sformatf("Collision detected: awaddr(%h), araddr(%h)", wr_req.awaddr, current_araddr_start))
+        if (_rdata_active == TRUE) begin
+          if (wr_req.awaddr >= _current_araddr_start &&
+              wr_req.awaddr + wr_req.awlen <= _current_araddr_stop) begin
+            `uvm_warning(get_name(), $sformatf("Collision detected: awaddr(%h), araddr(%h)", wr_req.awaddr, _current_araddr_start))
             vif.bresp <= VIP_AXI4_RESP_SLVERR_C;
           end
         end
@@ -838,8 +840,8 @@ class vip_axi4_driver #(
     int read_range;
     int mem_read_delay;
 
-    rdata_active         = FALSE;
-    current_araddr_start = 0;
+    _rdata_active         = FALSE;
+    _current_araddr_start = 0;
 
     forever begin
 
@@ -862,16 +864,19 @@ class vip_axi4_driver #(
 
       if (cfg.rvalid_delay_enabled) begin
         fork
-          drive_rvalid();
+          begin
+            _rvalid_process = process::self();
+            drive_rvalid();
+          end
         join_none
       end else begin
         vif.rvalid <= '1;
       end
 
       // Collision detection
-      rdata_active         = TRUE;
-      current_araddr_start = read_item.araddr;
-      current_araddr_stop  = read_item.araddr + read_item.arlen;
+      _rdata_active         = TRUE;
+      _current_araddr_start = read_item.araddr;
+      _current_araddr_stop  = read_item.araddr + read_item.arlen;
 
       for (int i = read_start_index; i < read_stop_index; i++) begin
 
@@ -888,17 +893,18 @@ class vip_axi4_driver #(
           @(posedge vif.clk);
         end
 
-        current_araddr_start += CFG_P.VIP_AXI4_STRB_WIDTH_P;
+        _current_araddr_start += CFG_P.VIP_AXI4_STRB_WIDTH_P;
       end
 
-      rdata_active = FALSE;
+      if (cfg.rvalid_delay_enabled) begin
+        _rvalid_process.kill();
+      end
+
+      _rdata_active = FALSE;
 
       vif.rlast  <= '0;
       vif.rvalid <= '0;
 
-      if (cfg.rvalid_delay_enabled) begin
-        disable fork;
-      end
     end
   endtask
 
@@ -951,13 +957,13 @@ class vip_axi4_driver #(
     int arid;
 
     // Waiting for the OOO queue to contain items
-    while (araddr_queue.size() == 0) begin
+    while (_araddr_queue.size() == 0) begin
       repeat (10) @(posedge vif.clk);
     end
 
     // In-order bursts
     if (cfg.mem_ooo_queue_size == 0) begin
-      read_item = araddr_queue.pop_front();
+      read_item = _araddr_queue.pop_front();
     end
     // Out-of-order bursts
     else begin
@@ -965,29 +971,29 @@ class vip_axi4_driver #(
       random_read_index = $urandom_range(cfg.mem_ooo_queue_size-1, 0);
 
       if (random_read_index == 0) begin
-        read_item = araddr_queue.pop_front();
+        read_item = _araddr_queue.pop_front();
         return;
       end
 
       // Check if the index is out of bound, i.e., is larger than the queue's size
-      if (random_read_index >= araddr_queue.size()) begin
-        random_read_index = araddr_queue.size() - 1;
+      if (random_read_index >= _araddr_queue.size()) begin
+        random_read_index = _araddr_queue.size() - 1;
       end
 
       // Other than first index (0) queue item: we must fetch the oldest ID
-      arid = araddr_queue[random_read_index].arid;
+      arid = _araddr_queue[random_read_index].arid;
 
       // Check in the OOO queue if there are any items with the same ID but
       // with a lower position in the queue because they must be served first
       for (int i = random_read_index-1; i >= 0; i--) begin
-        if (araddr_queue[i].arid == arid) begin
+        if (_araddr_queue[i].arid == arid) begin
           random_read_index = i;
         end
       end
 
       // Now we have located the oldest ID
-      read_item = araddr_queue[random_read_index];
-      araddr_queue.delete(random_read_index);
+      read_item = _araddr_queue[random_read_index];
+      _araddr_queue.delete(random_read_index);
 
       if (random_read_index != 0) begin
         ooo_counter++;
@@ -1007,7 +1013,7 @@ class vip_axi4_driver #(
       read_item = new();
       _ev_monitor_araddr.wait_on();
       $cast(read_item, _ev_monitor_araddr.get_trigger_data());
-      araddr_queue.push_back(read_item);
+      _araddr_queue.push_back(read_item);
       _ev_monitor_araddr.reset();
     end
   endtask

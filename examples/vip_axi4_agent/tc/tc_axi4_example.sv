@@ -142,7 +142,7 @@ class tc_axi4_example extends axi4_base_test;
       end
       for (int j = 0; j < rd_response.rdata.size(); j++) begin
         if (i*16+j+counter_start != rd_response.rdata[j]) begin
-          `uvm_error(get_name(), $sformatf("%0d != %0d", i*16+j,rd_response.rdata[j]))
+          `uvm_error(get_name(), $sformatf("Check(%0d): %0d != %0d", i*16+j, i*16+j+counter_start,rd_response.rdata[j]))
           ok = FALSE;
           break;
         end

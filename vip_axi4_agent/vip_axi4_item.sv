@@ -172,6 +172,13 @@ class vip_axi4_item #(
     }
   }
 
+  constraint con_awburst {
+    if (cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) {
+      awburst >= cfg.min_burst;
+      awburst <= cfg.max_burst;
+    }
+  }
+
   constraint con_awlen {
     if (cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) {
       if (awburst == VIP_AXI4_BURST_WRAP_C) {
@@ -189,13 +196,6 @@ class vip_axi4_item #(
       awsize <= cfg.max_size;
     }
   }
-
-  //constraint con_awburst { // BROKEN
-  //  if (cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) {
-  //    awburst >= cfg.min_burst;
-  //    awburst <= cfg.max_burst;
-  //  }
-  //}
 
   constraint con_wdata_size {
     if (cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) {
@@ -236,12 +236,12 @@ class vip_axi4_item #(
           } else if (i == awlen && awaddr[3 : 0] != 0) {
             wstrb[i] == 2**awaddr[3 : 0] - 1;
           } else {
-            wstrb[i] == '1;
+            wstrb[i] == {CFG_P.VIP_AXI4_STRB_WIDTH_P{1'b1}};
           }
         }
       } else {
         foreach (wstrb[i]) {
-          wstrb[i] != '0;
+          wstrb[i] != 0;
         }
       }
     }
@@ -258,7 +258,7 @@ class vip_axi4_item #(
   constraint con_wuser_val {
     if (cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) {
       foreach (wuser[i]) {
-        wuser[i] == '0;
+        wuser[i] == 0;
       }
     }
   }
@@ -276,6 +276,13 @@ class vip_axi4_item #(
       araddr >= cfg.min_addr;
       araddr <= cfg.max_addr;
       araddr[11 : 0] <= VIP_AXI4_4K_ADDRESS_BOUNDARY_C - ((unsigned'(arlen) + 1) * CFG_P.VIP_AXI4_STRB_WIDTH_P);
+    }
+  }
+
+  constraint con_arburst {
+    if (cfg.axi4_access == VIP_AXI4_RD_REQUEST_E) {
+      arburst >= cfg.min_burst;
+      arburst <= cfg.max_burst;
     }
   }
 
@@ -299,13 +306,6 @@ class vip_axi4_item #(
       arsize <= cfg.max_size;
     }
   }
-
-  //constraint con_arburst {
-  //  if (cfg.axi4_access == VIP_AXI4_RD_REQUEST_E) {
-  //    arburst >= cfg.min_burst;
-  //    arburst <= cfg.max_burst;
-  //  }
-  //}
 
   constraint con_rdata_size {
     if (cfg.axi4_access == VIP_AXI4_RD_RESPONSE_E) {
@@ -340,7 +340,7 @@ class vip_axi4_item #(
   constraint con_ruser_val {
     if (cfg.axi4_access == VIP_AXI4_RD_RESPONSE_E) {
       foreach (ruser[i]) {
-        ruser[i] == '0;
+        ruser[i] == 0;
       }
     }
   }

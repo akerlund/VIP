@@ -137,7 +137,7 @@ class vip_axi4_base_seq extends uvm_sequence #(vip_axi4_item #(VIP_AXI4_CFG_C));
   endfunction
 
 
-  function void set_addr_increment(int addr_increment);
+  function void set_addr_increment(longint addr_increment);
     _addr_increment = addr_increment;
   endfunction
 
@@ -149,7 +149,7 @@ class vip_axi4_base_seq extends uvm_sequence #(vip_axi4_item #(VIP_AXI4_CFG_C));
   endfunction
 
 
-  function void set_len(logic [7 : 0] len);
+  function void set_len(logic unsigned [7 : 0] len);
     _cfg.min_len = len;
     _cfg.max_len = len;
   endfunction
@@ -166,25 +166,25 @@ class vip_axi4_base_seq extends uvm_sequence #(vip_axi4_item #(VIP_AXI4_CFG_C));
   endfunction
 
 
-  function void set_cfg_addr(int max_addr, int min_addr);
+  function void set_cfg_addr(longint max_addr, longint min_addr);
     _cfg.max_addr = max_addr;
     _cfg.min_addr = min_addr;
   endfunction
 
 
-  function void set_cfg_len(int max_len, int min_len);
+  function void set_cfg_len(logic unsigned [7 : 0] max_len, logic unsigned [7 : 0] min_len);
     _cfg.max_len = max_len;
     _cfg.min_len = min_len;
   endfunction
 
 
-  function void set_cfg_size(int max_size, int min_size);
+  function void set_cfg_size(logic unsigned [2 : 0] max_size, logic unsigned [2 : 0] min_size);
     _cfg.max_size = max_size;
     _cfg.min_size = min_size;
   endfunction
 
 
-  function void set_cfg_burst(int max_burst, int min_burst);
+  function void set_cfg_burst(logic unsigned [1 : 0] max_burst, logic unsigned [1 : 0] min_burst);
     _cfg.max_burst = max_burst;
     _cfg.min_burst = min_burst;
   endfunction

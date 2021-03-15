@@ -37,29 +37,29 @@ class vip_axi4_monitor #(
 
   // Class variables
   protected virtual vip_axi4_if #(CFG_P) vif;
-  protected process monitor_process;
+  protected process _monitor_process;
   protected int   id;
   vip_axi4_config cfg;
 
   // Driver's read address channel items: expected response to sequence
-  vip_axi4_item #(CFG_P) driver_item;
-  vip_axi4_item #(CFG_P) driver_items [int][$];
-  int                    nr_of_driver_items;
+  protected vip_axi4_item #(CFG_P) _driver_item;
+  protected vip_axi4_item #(CFG_P) _driver_items [int][$];
+  protected int                    _nr_of_driver_items;
 
   // Events to the Driver and sequence
   protected string    _ev_id = "";
   protected uvm_event _ev_monitor_wdata;
   protected uvm_event _ev_monitor_araddr;
 
-  vip_axi4_item #(CFG_P) awaddr_items [$];
-  vip_axi4_item #(CFG_P) araddr_items [int][$];
+  protected vip_axi4_item #(CFG_P) _awaddr_items [$];
+  protected vip_axi4_item #(CFG_P) _araddr_items [int][$];
 
   // Ingress data is saved in dynamic list
-  logic [CFG_P.VIP_AXI4_DATA_WIDTH_P : 0] wdata_beats [$];
-  logic [CFG_P.VIP_AXI4_STRB_WIDTH_P : 0] wstrb_beats [$];
-  logic [CFG_P.VIP_AXI4_USER_WIDTH_P : 0] wuser_beats [$];
-  logic [CFG_P.VIP_AXI4_DATA_WIDTH_P : 0] rdata_beats [$];
-  logic [CFG_P.VIP_AXI4_USER_WIDTH_P : 0] ruser_beats [$];
+  protected logic [CFG_P.VIP_AXI4_DATA_WIDTH_P : 0] _wdata_beats [$];
+  protected logic [CFG_P.VIP_AXI4_STRB_WIDTH_P : 0] _wstrb_beats [$];
+  protected logic [CFG_P.VIP_AXI4_USER_WIDTH_P : 0] _wuser_beats [$];
+  protected logic [CFG_P.VIP_AXI4_DATA_WIDTH_P : 0] _rdata_beats [$];
+  protected logic [CFG_P.VIP_AXI4_USER_WIDTH_P : 0] _ruser_beats [$];
 
 
   `uvm_component_param_utils_begin(vip_axi4_monitor #(CFG_P))
@@ -119,7 +119,7 @@ class vip_axi4_monitor #(
   virtual protected task monitor_start();
     wait (!cfg.monitor_disabled);
     fork
-      monitor_process = process::self();
+      _monitor_process = process::self();
       collect_write_channel();
       collect_read_channel();
     join
@@ -129,19 +129,19 @@ class vip_axi4_monitor #(
   //
   // ---------------------------------------------------------------------------
   virtual function void handle_reset();
-    if (monitor_process != null) begin
-      monitor_process.kill();
+    if (_monitor_process != null) begin
+      _monitor_process.kill();
     end
-    awaddr_items.delete();
-    araddr_items.delete();
-    wdata_beats.delete();
-    wstrb_beats.delete();
-    wuser_beats.delete();
-    rdata_beats.delete();
-    ruser_beats.delete();
-    driver_items.delete();
+    _awaddr_items.delete();
+    _araddr_items.delete();
+    _wdata_beats.delete();
+    _wstrb_beats.delete();
+    _wuser_beats.delete();
+    _rdata_beats.delete();
+    _ruser_beats.delete();
+    _driver_items.delete();
     rd_request_fifo.flush();
-    nr_of_driver_items = 0;
+    _nr_of_driver_items = 0;
     if (cfg.vip_axi4_agent_type == VIP_AXI4_SLAVE_AGENT_E && cfg.mem_slave == TRUE) begin
       _ev_monitor_wdata.reset();
       _ev_monitor_araddr.reset();
@@ -184,7 +184,7 @@ class vip_axi4_monitor #(
         awaddr_item.wstrb = new[vif.awlen+1];
         awaddr_item.wuser = new[vif.awlen+1];
 
-        awaddr_items.push_back(awaddr_item);
+        _awaddr_items.push_back(awaddr_item);
         awaddr_port.write(awaddr_item);
 
         `uvm_info(get_name(), $sformatf("Collected Write Address Channel:\n%s", awaddr_item.sprint()), UVM_HIGH)
@@ -194,25 +194,25 @@ class vip_axi4_monitor #(
       // Write Data Channel
       // -----------------------------------------------------------------------
       if (vif.wvalid === '1 && vif.wready === '1) begin
-        wdata_beats.push_back(vif.wdata);
-        wstrb_beats.push_back(vif.wstrb);
-        wuser_beats.push_back(vif.wuser);
+        _wdata_beats.push_back(vif.wdata);
+        _wstrb_beats.push_back(vif.wstrb);
+        _wuser_beats.push_back(vif.wuser);
       end
 
       if (vif.wlast === '1 && vif.wvalid === '1 && vif.wready === '1) begin
 
         wdata_item = new();
-        wdata_item = awaddr_items.pop_front();
+        wdata_item = _awaddr_items.pop_front();
 
-        wdata_item.wdata = new[wdata_beats.size()];
-        wdata_item.wstrb = new[wstrb_beats.size()];
-        wdata_item.wuser = new[wuser_beats.size()];
-        foreach (wdata_item.wdata[i]) begin wdata_item.wdata[i] = wdata_beats[i]; end
-        foreach (wdata_item.wstrb[i]) begin wdata_item.wstrb[i] = wstrb_beats[i]; end
-        foreach (wdata_item.wuser[i]) begin wdata_item.wuser[i] = wuser_beats[i]; end
-        wdata_beats.delete();
-        wstrb_beats.delete();
-        wuser_beats.delete();
+        wdata_item.wdata = new[_wdata_beats.size()];
+        wdata_item.wstrb = new[_wstrb_beats.size()];
+        wdata_item.wuser = new[_wuser_beats.size()];
+        foreach (wdata_item.wdata[i]) begin wdata_item.wdata[i] = _wdata_beats[i]; end
+        foreach (wdata_item.wstrb[i]) begin wdata_item.wstrb[i] = _wstrb_beats[i]; end
+        foreach (wdata_item.wuser[i]) begin wdata_item.wuser[i] = _wuser_beats[i]; end
+        _wdata_beats.delete();
+        _wstrb_beats.delete();
+        _wuser_beats.delete();
 
         `uvm_info(get_name(), $sformatf("Collected Write Data Channel:\n%s", wdata_item.sprint()), UVM_HIGH)
 
@@ -277,7 +277,7 @@ class vip_axi4_monitor #(
         araddr_item.aruser   = vif.aruser;
 
         channel_id = int'(vif.arid);
-        araddr_items[channel_id].push_back(araddr_item);
+        _araddr_items[channel_id].push_back(araddr_item);
 
         araddr_port.write(araddr_item);
 
@@ -289,10 +289,10 @@ class vip_axi4_monitor #(
 
         // This read transaction's response is requested by a sequence
         if (!rd_request_fifo.is_empty()) begin
-          rd_request_fifo.get(driver_item);
-          driver_arid = int'(driver_item.arid);
-          driver_items[driver_arid].push_back(driver_item);
-          nr_of_driver_items++;
+          rd_request_fifo.get(_driver_item);
+          driver_arid = int'(_driver_item.arid);
+          _driver_items[driver_arid].push_back(_driver_item);
+          _nr_of_driver_items++;
         end
 
       end
@@ -302,8 +302,8 @@ class vip_axi4_monitor #(
       // -----------------------------------------------------------------------
       if (vif.rvalid === '1 && vif.rready === '1) begin
 
-        rdata_beats.push_back(vif.rdata);
-        ruser_beats.push_back(vif.ruser);
+        _rdata_beats.push_back(vif.rdata);
+        _ruser_beats.push_back(vif.ruser);
 
         if (vif.rlast === '1) begin
 
@@ -312,11 +312,11 @@ class vip_axi4_monitor #(
           if (cfg.monitor_merge_reads == TRUE) begin
 
             channel_id = int'(vif.rid);
-            if (!araddr_items.exists(channel_id)) begin
+            if (!_araddr_items.exists(channel_id)) begin
               `uvm_fatal(get_name(), $sformatf("Collected rid (%0d = %0h) which cannot be associated with any arid", channel_id, channel_id))
             end
 
-            rdata_item = araddr_items[channel_id].pop_front();
+            rdata_item = _araddr_items[channel_id].pop_front();
 
             if (araddr_item == null) begin
               `uvm_fatal(get_name(), $sformatf("Fetched NULL object with rid (%0d = %0h)", channel_id, channel_id))
@@ -326,13 +326,13 @@ class vip_axi4_monitor #(
           rdata_item.rid   = vif.rid;
           rdata_item.rresp = vif.rresp;
 
-          rdata_item.rdata = new[rdata_beats.size()];
-          rdata_item.ruser = new[ruser_beats.size()];
-          foreach (rdata_item.rdata[i]) begin rdata_item.rdata[i] = rdata_beats[i]; end
-          foreach (rdata_item.ruser[i]) begin rdata_item.ruser[i] = ruser_beats[i]; end
+          rdata_item.rdata = new[_rdata_beats.size()];
+          rdata_item.ruser = new[_ruser_beats.size()];
+          foreach (rdata_item.rdata[i]) begin rdata_item.rdata[i] = _rdata_beats[i]; end
+          foreach (rdata_item.ruser[i]) begin rdata_item.ruser[i] = _ruser_beats[i]; end
 
-          rdata_beats.delete();
-          ruser_beats.delete();
+          _rdata_beats.delete();
+          _ruser_beats.delete();
 
           `uvm_info(get_name(), $sformatf("Collected Read Data Channel:\n%s", rdata_item.sprint()), UVM_HIGH)
 
@@ -340,11 +340,11 @@ class vip_axi4_monitor #(
 
           // Checking if the driver has registered any ID's that should be forwarded back
           if (cfg.vip_axi4_agent_type == VIP_AXI4_MASTER_AGENT_E && cfg.is_active == UVM_ACTIVE) begin
-            if (nr_of_driver_items != 0) begin
-              if (driver_items.exists(channel_id) && driver_items[channel_id].size() != 0) begin
-                void'(driver_items[channel_id].pop_front());
+            if (_nr_of_driver_items != 0) begin
+              if (_driver_items.exists(channel_id) && _driver_items[channel_id].size() != 0) begin
+                void'(_driver_items[channel_id].pop_front());
                 rd_response_port.write(rdata_item);
-                nr_of_driver_items--;
+                _nr_of_driver_items--;
               end
             end
           end

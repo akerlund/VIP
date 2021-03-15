@@ -387,6 +387,7 @@ class axi4_scoreboard extends uvm_scoreboard;
 
     if (!mst_rdata_item.compare(slv_rdata_item)) begin
       compare_ok = FALSE;
+      `uvm_error(get_name(), $sformatf("compare_read0: mem_agent0 and rd_agent0 differ"))
     end
 
     memory_i0 = unsigned'(mst_rdata_item.araddr) / VIP_AXI4_CFG_C.VIP_AXI4_STRB_WIDTH_P;
@@ -402,7 +403,7 @@ class axi4_scoreboard extends uvm_scoreboard;
       end
 
       if (rdata !== mst_rdata_item.rdata[counter]) begin
-        `uvm_error(get_name(), $sformatf("rdata (%0d) mismatches", counter))
+        `uvm_error(get_name(), $sformatf("SB = (%0d), rdata = (%0d)", rdata, counter))
       end
       counter++;
     end
@@ -410,7 +411,7 @@ class axi4_scoreboard extends uvm_scoreboard;
     number_of_compared++;
     number_of_compared_rd++;
     if (!compare_ok) begin
-      `uvm_error(get_name(), $sformatf("Packet number (%0d) mismatches", number_of_compared))
+      `uvm_error(get_name(), $sformatf("compare_read0: Packet number (%0d) mismatches", number_of_compared))
       compare_ok = FALSE;
       number_of_failed++;
     end
@@ -438,7 +439,7 @@ class axi4_scoreboard extends uvm_scoreboard;
     number_of_compared++;
     number_of_compared_rd++;
     if (!compare_ok) begin
-      `uvm_error(get_name(), $sformatf("Packet number (%0d) mismatches", number_of_compared))
+      `uvm_error(get_name(), $sformatf("compare_read1: Packet number (%0d) mismatches", number_of_compared))
       compare_ok = FALSE;
       number_of_failed++;
     end
