@@ -181,6 +181,7 @@ module axi4_tb_top;
   );
 
   initial begin
+    $timeformat(-9, 0, "", 11);  // units, precision, suffix, min field width
     if ($test$plusargs("RECORD")) begin
       uvm_config_db #(uvm_verbosity)::set(null,"*", "recording_detail", UVM_FULL);
     end else begin

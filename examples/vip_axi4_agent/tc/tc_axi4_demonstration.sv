@@ -76,7 +76,7 @@ class tc_axi4_demonstration extends axi4_base_test;
     // Combined write, with all requests combined into one, i.e., passed to the
     // driver as one single request item
     // -------------------------------------------------------------------------
-    `uvm_info(get_name(), $sformatf("[WRITE] Combining requests: Address (0x100), Counter 256, 257, 258, ..., 511"), UVM_LOW)
+    `uvm_info(get_name(), $sformatf("[WRITE] Combining requests: Address (0x1000), Counter 256, 257, 258, ..., 511"), UVM_LOW)
     vip_axi4_write_seq0.set_counter(256); // The counter is already 256 though
     vip_axi4_write_seq0.set_addr(256*AXI4_STRB_WIDTH_C);
     vip_axi4_write_seq0.set_len(15);
@@ -91,7 +91,7 @@ class tc_axi4_demonstration extends axi4_base_test;
     // -------------------------------------------------------------------------
     // Read with requested responses which we can use in a testcase
     // -------------------------------------------------------------------------
-    `uvm_info(get_name(), $sformatf("[READ] Requesting read responses: Address (0x100)"), UVM_LOW)
+    `uvm_info(get_name(), $sformatf("[READ] Requesting read responses: Address (0x1000)"), UVM_LOW)
     vip_axi4_read_seq0.set_addr(256*AXI4_STRB_WIDTH_C);
     vip_axi4_read_seq0.set_get_rd_response(TRUE);
     vip_axi4_read_seq0.start(v_sqr.read_sequencer);

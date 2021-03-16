@@ -30,7 +30,7 @@ class vip_axi4_item_config extends uvm_object;
   int                    min_id    = 0;
   int                    max_id    = 0;
   longint                min_addr  = 0;
-  longint                max_addr  = -1;
+  longint                max_addr  = VIP_AXI4_4K_ADDRESS_BOUNDARY_C-1;
   logic unsigned [7 : 0] min_len   = 0;
   logic unsigned [7 : 0] max_len   = 255;
   logic unsigned [2 : 0] min_size  = VIP_AXI4_SIZE_16B_C;

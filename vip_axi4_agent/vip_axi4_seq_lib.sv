@@ -58,16 +58,7 @@ class vip_axi4_base_seq extends uvm_sequence #(vip_axi4_item #(VIP_AXI4_CFG_C));
   function new(string name = "vip_axi4_base_seq");
     super.new(name);
     _cfg = new();
-    _cfg.min_id     = 0;
-    _cfg.max_id     = 2**VIP_AXI4_CFG_C.VIP_AXI4_ID_WIDTH_P-1;
-    _cfg.min_addr   = 0;
-    _cfg.max_addr   = VIP_AXI4_4K_ADDRESS_BOUNDARY_C-1;
-    _cfg.min_len    = 0;
-    _cfg.max_len    = 255;
-    _cfg.min_size   = VIP_AXI4_SIZE_16B_C;
-    _cfg.max_size   = VIP_AXI4_SIZE_16B_C;
-    _cfg.max_burst  = VIP_AXI4_BURST_INCR_C;
-    _cfg.min_burst  = VIP_AXI4_BURST_INCR_C;
+    _cfg.max_id = 2**VIP_AXI4_CFG_C.VIP_AXI4_ID_WIDTH_P-1;
   endfunction
 
 
