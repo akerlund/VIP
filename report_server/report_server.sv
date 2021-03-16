@@ -1,6 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Copyright (C) 2020 Fredrik Åkerlund
+// https://github.com/akerlund/VIP
+//
+// Authors: Kaushal.Modi@analog.com, Fredrik Åkerlund
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -46,7 +49,6 @@
 //   running the sims. If that value is 0 or if that variable is
 //   not set, a dark background terminal will be assumed.
 //
-// Authors: Kaushal.Modi@analog.com, Fredrik Åkerlund
 //
 ////////////////////////////////////////////////////////////////////////////////
 
