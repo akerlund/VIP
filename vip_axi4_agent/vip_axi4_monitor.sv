@@ -117,7 +117,7 @@ class vip_axi4_monitor #(
   // ---------------------------------------------------------------------------
   //
   // ---------------------------------------------------------------------------
-  virtual protected task monitor_start();
+  protected task monitor_start();
     wait (!cfg.monitor_disabled);
     fork
       _monitor_process = process::self();
@@ -129,7 +129,7 @@ class vip_axi4_monitor #(
   // ---------------------------------------------------------------------------
   //
   // ---------------------------------------------------------------------------
-  virtual function void handle_reset();
+  function void handle_reset();
     if (_monitor_process != null) begin
       _monitor_process.kill();
     end
@@ -160,7 +160,7 @@ class vip_axi4_monitor #(
 
     forever begin
 
-      @(posedge vif.clk iff vif.rst_n === '1);
+      @(posedge vif.clk);
 
       // -----------------------------------------------------------------------
       // Write Address Channel
@@ -253,7 +253,7 @@ class vip_axi4_monitor #(
 
     forever begin
 
-      @(posedge vif.clk iff vif.rst_n === '1);
+      @(posedge vif.clk);
 
       // -----------------------------------------------------------------------
       // Read Address Channel

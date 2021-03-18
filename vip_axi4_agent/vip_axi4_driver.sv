@@ -132,7 +132,7 @@ class vip_axi4_driver #(
   // ---------------------------------------------------------------------------
   //
   // ---------------------------------------------------------------------------
-  virtual protected task driver_start();
+  protected task driver_start();
 
     if (cfg.vip_axi4_agent_type == VIP_AXI4_MASTER_AGENT_E) begin
       fork
@@ -182,7 +182,7 @@ class vip_axi4_driver #(
   // ---------------------------------------------------------------------------
   // Reset VIF
   // ---------------------------------------------------------------------------
-  virtual protected task reset_vif();
+  protected task reset_vif();
 
     if (cfg.vip_axi4_agent_type == VIP_AXI4_MASTER_AGENT_E) begin
 
@@ -272,21 +272,21 @@ class vip_axi4_driver #(
 
     forever begin
 
-      @(posedge vif.clk);
-      seq_item_port.try_next_item(req);
+      seq_item_port.get_next_item(req);
 
-      if (req != null) begin
-
-        if (req.cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) begin
-          drive_wr_request();
-        end else if (req.cfg.axi4_access == VIP_AXI4_RD_REQUEST_E) begin
-          drive_araddr();
-        end else begin
-          `uvm_fatal(get_name(), "Invalid item type");
-        end
-
-        seq_item_port.item_done();
+      if (req == null) begin
+        `uvm_fatal(get_name(), "get_next_item() returned NULL");
       end
+
+      if (req.cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) begin
+        drive_wr_request();
+      end else if (req.cfg.axi4_access == VIP_AXI4_RD_REQUEST_E) begin
+        drive_araddr();
+      end else begin
+        `uvm_fatal(get_name(), "Invalid item type");
+      end
+
+      seq_item_port.item_done();
     end
   endtask
 
@@ -297,18 +297,18 @@ class vip_axi4_driver #(
 
     forever begin
 
-      @(posedge vif.clk);
-      seq_item_port.try_next_item(req);
+      seq_item_port.get_next_item(req);
 
-      if (req != null) begin
-
-        if (req.cfg.axi4_access != VIP_AXI4_RD_RESPONSE_E) begin
-          `uvm_fatal(get_name(), $sformatf("Invalid item type (%s)", req.cfg.axi4_access.name()))
-        end
-
-        drive_rdata();
-        seq_item_port.item_done();
+      if (req == null) begin
+        `uvm_fatal(get_name(), "get_next_item() returned NULL");
       end
+
+      if (req.cfg.axi4_access != VIP_AXI4_RD_RESPONSE_E) begin
+        `uvm_fatal(get_name(), $sformatf("Invalid item type (%s)", req.cfg.axi4_access.name()))
+      end
+
+      drive_rdata();
+      seq_item_port.item_done();
     end
   endtask
 
