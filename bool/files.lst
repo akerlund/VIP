@@ -1,0 +1,9 @@
+module_path=$git_root/bool
+
+uvm_dirs+="
+  +incdir+$module_path
+"
+
+uvm_files+="
+  $module_path/bool_pkg.sv
+"
