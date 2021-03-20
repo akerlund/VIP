@@ -5,21 +5,14 @@ set -e
 # Check input parameters
 # ------------------------------------------------------------------------------
 
-if [ "$#" -lt 2 ]; then
+if [ "$#" -lt 5 ]; then
   echo "ERROR: Vivado run script missing input parameters"
 else
-  file_list=$1
-  rundir=$2
-fi
-
-# Vivado Synthesis/Implementation/Bitfile/ZynQ
-if [ "$#" -ge 3 ]; then
-  viv_run=$3
-fi
-
-# Set Vivado to run out-of-context (OOC)
-if [ "$#" -ge 4 ]; then
-  viv_ooc=$4
+  make_root=$1
+  file_list=$2
+  rundir=$3
+  viv_run=$4
+  viv_ooc=$5
 fi
 
 # ------------------------------------------------------------------------------
@@ -27,7 +20,6 @@ fi
 # ------------------------------------------------------------------------------
 
 echo "INFO [run_tools] Sourcing files"
-git_root=$(git rev-parse --show-toplevel)
 source $file_list
 
 echo "INFO [run_tools] Creating run directory"
@@ -47,8 +39,8 @@ echo $rtl_dirs  > rtl_dirs.lst
 echo $rtl_files > rtl_files.lst
 echo $uvm_files > uvm_files.lst
 echo $uvm_dirs  > uvm_dirs.lst
-cp   $git_root/scripts/vivado/build_normal.tcl ./
-cp   $git_root/scripts/vivado/start_vivado_notrace.tcl ./
+cp   $make_root/scripts/vivado/build_normal.tcl ./
+cp   $make_root/scripts/vivado/start_vivado_notrace.tcl ./
 
 
 echo "INFO [run_tools] Prepending the name of the top RTL module"

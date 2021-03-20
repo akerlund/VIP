@@ -29,7 +29,7 @@ RUN_VIVADO=$(MAKE_ROOT)/scripts/vivado/run.sh
 RUN_ZYNQ=$(MAKE_ROOT)/scripts/vivado/run_zynq.sh
 RUN_XSIM=$(MAKE_ROOT)/scripts/vivado/xsim.sh
 RUN_VERILATOR=$(MAKE_ROOT)/scripts/verilator/run.sh
-RUN_PYRG=$(MAKE_ROOT)/scripts/pyrg/pyrg.py
+RUN_PYRG=$(MAKE_ROOT)/../PYRG/pyrg.py
 
 export
 
@@ -67,13 +67,13 @@ help:
 	@echo ""
 
 build:
-	@$(RUN_VIVADO) $(MODULE_FILE_LIST) $(RUN_DIR) $(VIV_BUILD) $(VIV_OOC)
+	@$(RUN_VIVADO) $(MAKE_ROOT) $(MODULE_FILE_LIST) $(RUN_DIR) $(VIV_BUILD) $(VIV_OOC)
 
 synth:
-	@$(RUN_VIVADO) $(MODULE_FILE_LIST) $(RUN_DIR) $(VIV_SYNTH) $(VIV_OOC)
+	@$(RUN_VIVADO) $(MAKE_ROOT) $(MODULE_FILE_LIST) $(RUN_DIR) $(VIV_SYNTH) $(VIV_OOC)
 
 route:
-	@$(RUN_VIVADO) $(MODULE_FILE_LIST) $(RUN_DIR) $(VIV_ROUTE) $(VIV_OOC)
+	@$(RUN_VIVADO) $(MAKE_ROOT) $(MODULE_FILE_LIST) $(RUN_DIR) $(VIV_ROUTE) $(VIV_OOC)
 
 zynq:
 	@$(RUN_ZYNQ) $(MAKE_ROOT) $(MODULE_FILE_LIST) $(RUN_DIR)
