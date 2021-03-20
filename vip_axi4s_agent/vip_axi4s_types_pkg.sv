@@ -24,14 +24,6 @@
 
 package vip_axi4s_types_pkg;
 
-  `ifndef BOOL_T
-  `define BOOL_T
-  typedef enum bit {
-    FALSE,
-    TRUE
-  } bool_t;
-  `endif
-
   typedef enum {
     VIP_AXI4S_MASTER_AGENT_E,
     VIP_AXI4S_SLAVE_AGENT_E

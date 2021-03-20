@@ -22,6 +22,7 @@
 `ifndef VIP_AXI4S_AGENT_SVH
 `define VIP_AXI4S_AGENT_SVH
 
+`include "bool_pkg.sv"
 `include "vip_axi4s_types_pkg.sv"
 `include "vip_axi4s_agent_pkg.sv"
 `include "vip_axi4s_if.sv"

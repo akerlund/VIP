@@ -183,6 +183,25 @@ class tc_axi4_demonstration extends axi4_base_test;
       `uvm_error(get_name(), $sformatf("Register mismatch: wr(%0d) != rd(%0d)", cr_configuration, value))
     end
 
+    // -------------------------------------------------------------------------
+    // Random testing
+    // -------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     `uvm_info(get_name(), $sformatf("Done!"), UVM_LOW)
     phase.drop_objection(this);
 

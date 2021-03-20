@@ -21,10 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 `include "uvm_macros.svh"
-//`include "uvm_pkg.sv"
-import uvm_pkg::*;
-
-//`include "vip_axi4_agent.svh"
+`include "uvm_pkg.sv"
 `include "axi4_tb_pkg.sv"
 `include "axi4_tc_pkg.sv"
 `include "axi4_tb_top.sv"

@@ -27,6 +27,7 @@ package vip_axi4s_agent_pkg;
   import uvm_pkg::*;
   `include "uvm_macros.svh"
 
+  import bool_pkg::*;
   import vip_axi4s_types_pkg::*;
 
   `include "vip_axi4s_item_config.sv"

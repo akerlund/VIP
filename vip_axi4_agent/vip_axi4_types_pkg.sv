@@ -54,14 +54,6 @@ package vip_axi4_types_pkg;
   localparam logic unsigned [2 : 0] VIP_AXI4_SIZE_64B_C       = 3'b110;
   localparam logic unsigned [2 : 0] VIP_AXI4_SIZE_128B_C      = 3'b111;
 
-  `ifndef BOOL_T
-  `define BOOL_T
-  typedef enum bit {
-    FALSE,
-    TRUE
-  } bool_t;
-  `endif
-
   typedef enum {
     VIP_AXI4_MASTER_AGENT_E,
     VIP_AXI4_SLAVE_AGENT_E

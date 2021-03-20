@@ -21,8 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 `include "uvm_macros.svh"
-import uvm_pkg::*;
-
+`include "uvm_pkg.sv"
 `include "axi4s_tb_pkg.sv"
 `include "axi4s_tc_pkg.sv"
 `include "axi4s_tb_top.sv"

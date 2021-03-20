@@ -28,6 +28,7 @@ package axi4s_tc_pkg;
   import axi4s_tb_pkg::*;
 
   // Import testbench and agent packages here
+  import bool_pkg::*;
   import report_server_pkg::*;
   import vip_axi4s_types_pkg::*;
   import vip_axi4s_agent_pkg::*;

@@ -25,6 +25,7 @@ package axi4s_tb_pkg;
   `include "uvm_macros.svh"
   import uvm_pkg::*;
 
+  import bool_pkg::*;
   import clk_rst_types_pkg::*;
   import clk_rst_pkg::*;
   import vip_axi4s_types_pkg::*;
