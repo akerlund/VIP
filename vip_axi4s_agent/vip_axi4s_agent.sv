@@ -48,6 +48,10 @@ class vip_axi4s_agent #(
 
     super.build_phase(phase);
 
+    if (!uvm_config_db #(virtual vip_axi4s_if #(CFG_P))::get(this, "", "vif", vif)) begin
+      `uvm_fatal("NOVIF", {"Virtual interface must be set for: ", get_full_name(), ".vif"});
+    end
+
     if (!uvm_config_db #(vip_axi4s_config)::get(this, "", "cfg", cfg)) begin
       `uvm_info(get_type_name(), "Agent has no config, creating a default config", UVM_LOW)
       cfg = vip_axi4s_config::type_id::create("default_config", this);
@@ -101,7 +105,7 @@ class vip_axi4s_agent #(
   //
   // ---------------------------------------------------------------------------
   task passive_reset(logic reset);
-    if (cfg.is_active == UVM_PASSIVE && cfg.vip_axi4_agent_type == VIP_AXI4S_SLAVE_AGENT_E) begin
+    if (cfg.is_active == UVM_PASSIVE && cfg.vip_axi4s_agent_type == VIP_AXI4S_SLAVE_AGENT_E) begin
       vif.tready <= '1;
     end
   endtask

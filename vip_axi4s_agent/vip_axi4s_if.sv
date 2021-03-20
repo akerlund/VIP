@@ -22,22 +22,24 @@
 `ifndef VIP_AXI4S_IF
 `define VIP_AXI4S_IF
 
+import vip_axi4s_types_pkg::*;
+
 interface vip_axi4s_if #(
-  parameter vip_axi4s_CFG_P_t CFG_P = '{default: '0}
+  parameter vip_axi4s_cfg_t CFG_P = '{default: '0}
   )(
     input clk,
     input rst_n
   );
 
-  logic                                tvalid;
-  logic                                tready;
-  logic [CFG_P.AXI_DATA_WIDTH_P-1 : 0] tdata;
-  logic [CFG_P.AXI_STRB_WIDTH_P-1 : 0] tstrb;
-  logic [CFG_P.AXI_KEEP_WIDTH_P-1 : 0] tkeep;
-  logic                                tlast;
-  logic   [CFG_P.AXI_ID_WIDTH_P-1 : 0] tid;
-  logic [CFG_P.AXI_DEST_WIDTH_P-1 : 0] tdest;
-  logic [CFG_P.AXI_USER_WIDTH_P-1 : 0] tuser;
+  logic                                       tvalid;
+  logic                                       tready;
+  logic [CFG_P.VIP_AXI4S_TDATA_WIDTH_P-1 : 0] tdata;
+  logic [CFG_P.VIP_AXI4S_TSTRB_WIDTH_P-1 : 0] tstrb;
+  logic [CFG_P.VIP_AXI4S_TKEEP_WIDTH_P-1 : 0] tkeep;
+  logic                                       tlast;
+  logic   [CFG_P.VIP_AXI4S_TID_WIDTH_P-1 : 0] tid;
+  logic [CFG_P.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] tdest;
+  logic [CFG_P.VIP_AXI4S_TUSER_WIDTH_P-1 : 0] tuser;
 
 endinterface
 

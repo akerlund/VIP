@@ -29,13 +29,13 @@ package vip_axi4s_agent_pkg;
 
   import vip_axi4s_types_pkg::*;
 
+  `include "vip_axi4s_item_config.sv"
   `include "vip_axi4s_item.sv"
   `include "vip_axi4s_config.sv"
   `include "vip_axi4s_monitor.sv"
   `include "vip_axi4s_sequencer.sv"
   `include "vip_axi4s_driver.sv"
   `include "vip_axi4s_agent.sv"
-  `include "vip_axi4s_seq_lib.sv"
 
 endpackage
 

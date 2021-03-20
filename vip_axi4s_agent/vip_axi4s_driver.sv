@@ -74,7 +74,7 @@ class vip_axi4s_driver #(
   // ---------------------------------------------------------------------------
   //
   // ---------------------------------------------------------------------------
-  task driver_start(uvm_phase phase);
+  task driver_start();
     if (cfg.vip_axi4s_agent_type == VIP_AXI4S_MASTER_AGENT_E) begin
       fork
         _driver_process = process::self();

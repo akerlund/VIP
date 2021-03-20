@@ -37,7 +37,7 @@ class vip_axi4s_config extends uvm_object;
 
   `uvm_object_utils_begin(vip_axi4s_config);
     `uvm_field_enum(uvm_active_passive_enum, is_active,            UVM_ALL_ON)
-    `uvm_field_enum(vip_axi4_agent_type_t,   vip_axi4_agent_type,  UVM_ALL_ON)
+    `uvm_field_enum(vip_axi4s_agent_type_t,  vip_axi4s_agent_type, UVM_ALL_ON)
     `uvm_field_enum(bool_t,                  tvalid_delay_enabled, UVM_ALL_ON)
     `uvm_field_int(min_tvalid_delay_time,                          UVM_ALL_ON | UVM_DEC)
     `uvm_field_int(max_tvalid_delay_time,                          UVM_ALL_ON | UVM_DEC)

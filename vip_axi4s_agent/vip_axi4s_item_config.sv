@@ -28,9 +28,9 @@ class vip_axi4s_item_config extends uvm_object;
   int min_tid          = 0;
   int max_tid          = 0;
   int min_tdest        = 0;
-  int max_tdest        = -1;
-  int min_burst_length = 0;
-  int max_burst_length = 255;
+  int max_tdest        = 0;
+  int min_burst_length = 1;
+  int max_burst_length = 1;
 
   `uvm_object_utils_begin(vip_axi4s_item_config);
     `uvm_field_enum(vip_axi4s_tdata_type_t, axi4s_tdata_type, UVM_ALL_ON)

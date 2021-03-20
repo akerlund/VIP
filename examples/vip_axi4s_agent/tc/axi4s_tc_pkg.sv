@@ -1,6 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Copyright (C) 2021 Fredrik Åkerlund
+// https://github.com/akerlund/VIP
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,11 +20,22 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-`ifndef VIP_AXI4S_AGENT_SVH
-`define VIP_AXI4S_AGENT_SVH
+package axi4s_tc_pkg;
 
-`include "vip_axi4s_types_pkg.sv"
-`include "vip_axi4s_agent_pkg.sv"
-`include "vip_axi4s_if.sv"
+  `include "uvm_macros.svh"
+  import uvm_pkg::*;
 
-`endif
+  import axi4s_tb_pkg::*;
+
+  // Import testbench and agent packages here
+  import report_server_pkg::*;
+  import vip_axi4s_types_pkg::*;
+  import vip_axi4s_agent_pkg::*;
+  import clk_rst_types_pkg::*;
+  import clk_rst_pkg::*;
+
+  // Include testcase files here
+  `include "axi4s_base_test.sv"
+  `include "tc_axi4s_demonstration.sv"
+
+endpackage

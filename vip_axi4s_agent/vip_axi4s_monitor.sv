@@ -33,10 +33,10 @@ class vip_axi4s_monitor #(
   vip_axi4s_config cfg;
 
   // Ingress data is saved in dynamic list
-  protected logic [CFG_P.VIP_AXI4S_DATA_WIDTH_P : 0] _tdata_beats [$];
-  protected logic [CFG_P.VIP_AXI4S_STRB_WIDTH_P : 0] _tstrb_beats [$];
-  protected logic [CFG_P.VIP_AXI4S_KEEP_WIDTH_P : 0] _tkeep_beats [$];
-  protected logic [CFG_P.VIP_AXI4S_USER_WIDTH_P : 0] _tuser_beats [$];
+  protected logic [CFG_P.VIP_AXI4S_TDATA_WIDTH_P : 0] _tdata_beats [$];
+  protected logic [CFG_P.VIP_AXI4S_TSTRB_WIDTH_P : 0] _tstrb_beats [$];
+  protected logic [CFG_P.VIP_AXI4S_TKEEP_WIDTH_P : 0] _tkeep_beats [$];
+  protected logic [CFG_P.VIP_AXI4S_TUSER_WIDTH_P : 0] _tuser_beats [$];
 
 
   `uvm_component_param_utils_begin(vip_axi4s_monitor #(CFG_P))
@@ -126,14 +126,14 @@ class vip_axi4s_monitor #(
         axi4s_item.tstrb = new[_tstrb_beats.size()];
         axi4s_item.tkeep = new[_tkeep_beats.size()];
         axi4s_item.tuser = new[_tuser_beats.size()];
-        foreach (tdata_beats[i]) begin axi4s_item.tdata[i] = tdata_beats[i]; end
-        foreach (tstrb_beats[i]) begin axi4s_item.tstrb[i] = tstrb_beats[i]; end
-        foreach (tkeep_beats[i]) begin axi4s_item.tkeep[i] = tkeep_beats[i]; end
-        foreach (tuser_beats[i]) begin axi4s_item.tuser[i] = tuser_beats[i]; end
-        tdata_beats.delete();
-        tstrb_beats.delete();
-        tkeep_beats.delete();
-        tuser_beats.delete();
+        foreach (_tdata_beats[i]) begin axi4s_item.tdata[i] = _tdata_beats[i]; end
+        foreach (_tstrb_beats[i]) begin axi4s_item.tstrb[i] = _tstrb_beats[i]; end
+        foreach (_tkeep_beats[i]) begin axi4s_item.tkeep[i] = _tkeep_beats[i]; end
+        foreach (_tuser_beats[i]) begin axi4s_item.tuser[i] = _tuser_beats[i]; end
+        _tdata_beats.delete();
+        _tstrb_beats.delete();
+        _tkeep_beats.delete();
+        _tuser_beats.delete();
 
         `uvm_info(get_type_name(), $sformatf("Collected transfer:\n%s", axi4s_item.sprint()), UVM_HIGH)
         collected_port.write(axi4s_item);

@@ -1,6 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Copyright (C) 2021 Fredrik Åkerlund
+// https://github.com/akerlund/VIP
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,11 +20,16 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-`ifndef VIP_AXI4S_AGENT_SVH
-`define VIP_AXI4S_AGENT_SVH
+class axi4s_virtual_sequencer extends uvm_virtual_sequencer;
 
-`include "vip_axi4s_types_pkg.sv"
-`include "vip_axi4s_agent_pkg.sv"
-`include "vip_axi4s_if.sv"
+  `uvm_component_utils(axi4s_virtual_sequencer)
 
-`endif
+  clk_rst_sequencer                      clk_rst_sequencer0;
+  vip_axi4s_sequencer #(VIP_AXI4S_CFG_C) mst_sequencer;
+  vip_axi4s_sequencer #(VIP_AXI4S_CFG_C) slv_sequencer;
+
+  function new(string name = "virtual_sequencer", uvm_component parent = null);
+    super.new(name, parent);
+  endfunction
+
+endclass

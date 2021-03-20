@@ -24,7 +24,7 @@
 // -----------------------------------------------------------------------------
 class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C));
 
-  `uvm_object_param_utils(vip_axi4s_base_seq #(CFG_P))
+  `uvm_object_utils(vip_axi4s_base_seq)
 
   `ifndef VIP_AXI4S_BASE_SEQ_MACRO
   `define VIP_AXI4S_BASE_SEQ_MACRO
@@ -35,7 +35,7 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
   `define __CFG        vip_axi4s_item_config
   `endif
 
-  typedef logic [`__DATA_RANGE] custom_data_t  [$];
+  typedef logic [`__DATA_RANGE] custom_data_t [$];
 
   protected bool_t                  _verbose            = TRUE;
   protected `__CFG                  _cfg;
@@ -81,21 +81,21 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
   endfunction
 
 
-  function void set_dest(logic [`__ADDR_RANGE] dest);
+  function void set_dest(logic [`__DEST_RANGE] dest);
     _dest         = dest;
-    _cfg.min_dest = dest;
-    _cfg.max_dest = dest;
+    _cfg.min_tdest = dest;
+    _cfg.max_tdest = dest;
   endfunction
 
 
-  function void set_len(int burst_length);
+  function void set_burst_length(int burst_length);
     _cfg.min_burst_length = burst_length;
     _cfg.max_burst_length = burst_length;
   endfunction
 
 
-  function void set_tstrb(vip_axi4s_strb_t axi4s_tstrb);
-    _cfg.axi4s_tstrb = axi4_tstrb;
+  function void set_tstrb(vip_axi4s_tstrb_t axi4s_tstrb);
+    _cfg.axi4s_tstrb = axi4s_tstrb;
   endfunction
 
 
@@ -116,6 +116,7 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
     req = new();
     req.set_config(_cfg);
     req.set_counter_start(_counter);
+    req.print_config();
     if (_cfg.axi4s_tdata_type == VIP_AXI4S_TDATA_CUSTOM_E) begin
       req.set_custom_data(_custom_data);
     end
@@ -126,7 +127,7 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
     start_item(req);
     finish_item(req);
 
-    _counter + req.burst_length;
+    _counter += req.burst_length;
     set_dest(_dest + req.burst_length*VIP_AXI4S_CFG_C.VIP_AXI4S_TSTRB_WIDTH_P);
 
   endtask
