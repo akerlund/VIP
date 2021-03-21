@@ -82,7 +82,7 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
 
 
   function void set_dest(logic [`__DEST_RANGE] dest);
-    _dest         = dest;
+    _dest          = dest;
     _cfg.min_tdest = dest;
     _cfg.max_tdest = dest;
   endfunction
@@ -116,7 +116,6 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
     req = new();
     req.set_config(_cfg);
     req.set_counter_start(_counter);
-    req.print_config();
     if (_cfg.axi4s_tdata_type == VIP_AXI4S_TDATA_CUSTOM_E) begin
       req.set_custom_data(_custom_data);
     end

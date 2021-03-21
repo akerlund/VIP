@@ -69,6 +69,13 @@ class vip_axi4s_item #(
     custom_data = data;
   endfunction
 
+  function void pre_randomize();
+    if (cfg.axi4s_tdata_type == VIP_AXI4S_TDATA_CUSTOM_E) begin
+      if (custom_data.size() == 0) begin
+        `uvm_fatal(get_name(), "Custom data has size 0")
+      end
+    end
+  endfunction
 
 
   constraint con_burst_length {
