@@ -1,0 +1,11 @@
+module_path=$git_root/examples/vip_fixed_point
+
+uvm_dirs+="
+  +incdir+$module_path/tb/
+"
+
+uvm_files+="
+  $module_path/tb/fixed_point_tb_pkg.sv
+  $module_path/tc/fixed_point_tc_pkg.sv
+  $module_path/tb/fixed_point_tb_top.sv
+"
