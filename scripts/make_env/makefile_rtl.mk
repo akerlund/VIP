@@ -80,7 +80,7 @@ route:
 	@$(RUN_VIVADO) $(MAKE_ROOT) $(COMPILE_SH) $(RUN_DIR) $(VIV_ROUTE) $(VIV_OOC)
 
 zynq:
-	@$(RUN_ZYNQ) $(MAKE_ROOT) $(COMPILE_SH) $(RUN_DIR)
+	@$(RUN_ZYNQ) $(MAKE_ROOT) $(COMPILE_SH) $(RUN_DIR) $(GUI)
 
 pyrg:
 	@$(RUN_PYRG) $(PYRG_DIR)

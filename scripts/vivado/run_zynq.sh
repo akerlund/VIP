@@ -11,6 +11,7 @@ else
   make_root=$1
   file_list=$2
   rundir=$3
+  gui=$4
 fi
 
 # ------------------------------------------------------------------------------
@@ -46,8 +47,13 @@ echo -e "\n---------------------------------------------------------------------
 echo -e "INFO [run_tools] Starting Vivado"
 echo -e "--------------------------------------------------------------------------------\n"
 
-vivado -source start_zynq_notrace.tcl
-# -mode batch
+if [ $gui -eq 1 ]; then
+  gui=""
+else
+  gui="-mode batch"
+fi
+
+vivado -source start_zynq_notrace.tcl $gui
 
 
 # Print the runtime
