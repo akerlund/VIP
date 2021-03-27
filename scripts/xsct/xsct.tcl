@@ -1,7 +1,7 @@
 ################################################################################
 ##
 ## Copyright (C) 2021 Fredrik Åkerlund
-## https:##github.com/akerlund/VIP
+## https://github.com/akerlund/VIP
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 ## GNU General Public License for more details.
 ##
 ## You should have received a copy of the GNU General Public License
-## along with this program.  If not, see <https:##www.gnu.org/licenses/>.
+## along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ##
 ## Description:
 ##
@@ -38,69 +38,83 @@ set _src_dir       "SRC_DIR"
 set _inc_dir       "INC_DIR"
 
 setws RUNDIR
+
 source $_vitis_dir/scripts/vitis/util/zynqmp_utils.tcl
+#source /home/erland/workspace/dev/_ide/psinit/ps7_init.tcl
 
-proc upload_to_fpga {_jtag_name _bitstream _xsa _fsbl _app_name} {
+proc upload_to_fpga {_jtag_name _bit_file _xsa _vitis_dir _fsbl _app_elf_file} {
 
-  reset_cpu
+  puts "INFO \[FPGA\] Connect and reset"
+  connect -url tcp:127.0.0.1:3121
+  targets -set -nocase -filter {name =~"APU*"}
+  rst -system
+  puts "INFO \[FPGA\] Reset delay of 3 seconds"
   after 3000
 
-  # Set current target to entry single entry in list.
-  targets -set -filter {jtag_cable_name =~ $_jtag_name && level==0} -index 0
-  fpga -file $_bitstream
+  puts "INFO \[FPGA\] Uploading bitstream: $_bit_file"
+  targets -set -filter {jtag_cable_name =~ "Digilent Arty Z7 003017A6FCE4A" && level==0 && jtag_device_ctx=="jsn-Arty Z7-003017A6FCE4A-23727093-0"}
+  fpga -file $_bit_file
 
+  puts "INFO \[FPGA\] Uploading XSA: $_xsa"
   targets -set -nocase -filter {name =~"APU*"}
-  loadhw -hw $_xsa -mem-ranges [list {0x80000000 0xbfffffff} {0x400000000 0x5ffffffff} {0x1000000000 0x7fffffffff}]
+  loadhw -hw $_xsa -mem-ranges [list {0x40000000 0xbfffffff}] -regs
   configparams force-mem-access 1
 
-  targets -set -nocase -filter {name =~"APU*"}
-  set mode [expr [mrd -value 0xFF5E0200] & 0xf]
-
+  puts "INFO \[FPGA\] Uploading FSBL: $_fsbl"
   targets -set -nocase -filter {name =~ "*A9*#0"}
   rst -processor
-
-  # Download ELF and binary file to target
   dow $_fsbl
+  puts "INFO \[FPGA\] Run FSBL for 5 seconds: $_fsbl"
+  con
+  after 5000
+  stop
 
-  # Resume active target.
-  con -block -timeout 60
+  #puts "INFO \[FPGA\] PS7 init"
+  #targets -set -nocase -filter {name =~"APU*"}
+  #ps7_init
+  #puts "INFO \[FPGA\] PS7 post config"
+  #ps7_post_config
+  #targets -set -nocase -filter {name =~ "*A9*#0"}
 
-  # Processor Reset
+  puts "INFO \[FPGA\] Uploading application: $_app_elf_file"
   targets -set -nocase -filter {name =~ "*A9*#0"}
-  rst -processor
-
-  # Download application to target
-  dow $_app_name
+  dow $_app_elf_file
   configparams force-mem-access 0
-
-  # execute apllication
   con
 }
 
 if {[lindex $argv 0] == "vitis_create"} {
 
-  platform create -name "$_platform_name" -hw $_xsa_file -proc $_proc -os standalone
-  platform active $_platform_name
-
+  puts "INFO \[Vitis\] Creating domain"
   domain   create -name "$_domain_name" -proc $_proc -os standalone
   domain   active $_domain_name
-  platform generate -domains $_domain_name
-  app      create -name "$_app_name" -lang c++ -template "Empty Application (C++)" -platform $_platform_name
 
+  puts "INFO \[Vitis\] Creating platform"
+  platform create -name "$_platform_name" -hw $_xsa_file -proc $_proc -os standalone
+  platform active $_platform_name
+  platform generate -domains $_domain_name
+
+  puts "INFO \[Vitis\] Creating application"
+  app create -name "$_app_name" -lang c++ -template "Empty Application (C++)" -platform $_platform_name
+
+  puts "INFO \[Vitis\] Importing sources"
   importsources   -name "$_app_name" INC_DIR -soft-link
+
+  puts "INFO \[Vitis\] Building"
   app build -name $_app_name
   build_app       $_app_name
 }
 
 if {[lindex $argv 0] == "vitis_compile"} {
+  puts "INFO \[Vitis\] Importing projects"
   importprojects -path RUNDIR
-  importsources  -name $_app_name INC_DIR -soft-link
-  app build      -name $_app_name
-  build_app      $_app_name
+  puts "INFO \[Vitis\] Importing sources"
+  importsources  -name "$_app_name" INC_DIR -soft-link -linker-script
+  puts "INFO \[Vitis\] Building"
+  projects -build
 }
 
 if {[lindex $argv 0] == "fpga_upload"} {
-  puts "INFO \[FPGA\] Upload not tested yet"
-  #upload_to_fpga $_jtag_name $_bitstream $_xsa $_fsbl $_app_name
+  upload_to_fpga $_jtag_name $_bit_file $_xsa_file $_vitis_dir $_fsbl_file $_app_elf_file
 }
 
