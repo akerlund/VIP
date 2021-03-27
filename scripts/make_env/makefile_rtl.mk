@@ -38,7 +38,7 @@ export
 # Make targets
 # ------------------------------------------------------------------------------
 
-.PHONY: help build synth route zynq pyrg verilate vitis sw clean $(TC_LIST)
+.PHONY: help build synth route zynq pyrg verilate sw clean $(TC_LIST)
 
 help:
 	@echo "  ------------------------------------------------------------------------------"

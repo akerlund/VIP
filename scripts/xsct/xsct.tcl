@@ -64,7 +64,7 @@ proc upload_to_fpga {_jtag_name _bit_file _xsa _vitis_dir _fsbl _app_elf_file} {
   targets -set -nocase -filter {name =~ "*A9*#0"}
   rst -processor
   dow $_fsbl
-  puts "INFO \[FPGA\] Run FSBL for 5 seconds: $_fsbl"
+  puts "INFO \[FPGA\] Run FSBL for 5 seconds"
   con
   after 5000
   stop
@@ -85,14 +85,14 @@ proc upload_to_fpga {_jtag_name _bit_file _xsa _vitis_dir _fsbl _app_elf_file} {
 
 if {[lindex $argv 0] == "vitis_create"} {
 
-  puts "INFO \[Vitis\] Creating domain"
-  domain   create -name "$_domain_name" -proc $_proc -os standalone
-  domain   active $_domain_name
-
   puts "INFO \[Vitis\] Creating platform"
   platform create -name "$_platform_name" -hw $_xsa_file -proc $_proc -os standalone
   platform active $_platform_name
   platform generate -domains $_domain_name
+
+  puts "INFO \[Vitis\] Creating domain"
+  domain create -name "$_domain_name" -proc $_proc -os standalone
+  domain active $_domain_name
 
   puts "INFO \[Vitis\] Creating application"
   app create -name "$_app_name" -lang c++ -template "Empty Application (C++)" -platform $_platform_name
@@ -102,16 +102,18 @@ if {[lindex $argv 0] == "vitis_create"} {
 
   puts "INFO \[Vitis\] Building"
   app build -name $_app_name
-  build_app       $_app_name
 }
 
 if {[lindex $argv 0] == "vitis_compile"} {
+
+  #platform active $_platform_name
+  #platform -updatehw $_xsa_file
   puts "INFO \[Vitis\] Importing projects"
   importprojects -path RUNDIR
   puts "INFO \[Vitis\] Importing sources"
   importsources  -name "$_app_name" INC_DIR -soft-link -linker-script
   puts "INFO \[Vitis\] Building"
-  projects -build
+  app build -name $_app_name
 }
 
 if {[lindex $argv 0] == "fpga_upload"} {

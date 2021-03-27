@@ -82,7 +82,12 @@ else
 fi
 
 start=`date +%s`
+if [ -f "$xsct_dir/.metadata/.lock" ]; then
+  rm $xsct_dir/.metadata/.lock
+fi
 xsct xsct.tcl $_mode | sed "$xsct_junk_filter"
+echo "$!"
+rm $xsct_dir/.metadata/.lock
 end=`date +%s`
 runtime=$((end-start))
 
