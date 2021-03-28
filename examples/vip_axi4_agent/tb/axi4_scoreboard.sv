@@ -177,6 +177,16 @@ class axi4_scoreboard extends uvm_scoreboard;
   //
   // ---------------------------------------------------------------------------
   virtual function void handle_reset();
+
+    int objections_count;
+    uvm_objection objection = current_phase.get_objection();
+
+    objections_count = objection.get_objection_count(this);
+    if (objections_count > 0) begin
+      objection.drop_objection(this, $sformatf("Dropping (%0d) objections at reset", objections_count), objections_count);
+      `uvm_info(get_name(), $sformatf("Dropping (%0d) objections at reset", objections_count), UVM_LOW)
+    end
+
     mst0_awaddr_items.delete();
     mst0_bresp_items.delete();
     mst1_araddr_items.delete();

@@ -26,6 +26,7 @@ class vip_axi4_agent #(
 
   protected virtual vip_axi4_if #(CFG_P) vif;
   protected int                          id;
+  protected string                       _id_str;
 
   // For future features
   //axi4_monitor_callback            monitor_callback;
@@ -64,13 +65,14 @@ class vip_axi4_agent #(
 
     //monitor_callback = axi4_monitor_callback::type_id::create("monitor_callback", this);
     //driver_callback  = axi4_driver_callback::type_id::create("driver_callback", this);
-    monitor      = vip_axi4_monitor #(CFG_P)::type_id::create("monitor", this);
+    _id_str.itoa(id);
+    monitor      = vip_axi4_monitor #(CFG_P)::type_id::create({"vip_axi4_monitor_", _id_str}, this);
     monitor.cfg  = cfg;
 
     if (cfg.is_active == UVM_ACTIVE) begin
-      driver     = vip_axi4_driver #(CFG_P)::type_id::create("driver", this);
+      driver     = vip_axi4_driver #(CFG_P)::type_id::create({"vip_axi4_driver_", _id_str}, this);
       driver.cfg = cfg;
-      sequencer  = vip_axi4_sequencer #(CFG_P)::type_id::create("sequencer", this);
+      sequencer  = vip_axi4_sequencer #(CFG_P)::type_id::create({"vip_axi4_sequencer_", _id_str}, this);
     end
 
     // Register callbacks to objects

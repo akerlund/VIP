@@ -74,6 +74,11 @@ class tc_axi4_demonstration extends axi4_base_test;
     clk_delay(200);
 
     // -------------------------------------------------------------------------
+    // Reset
+    // -------------------------------------------------------------------------
+    reset_seq0.start(v_sqr.clk_rst_sequencer0);
+
+    // -------------------------------------------------------------------------
     // Combined write, with all requests combined into one, i.e., passed to the
     // driver as one single request item
     // -------------------------------------------------------------------------

@@ -36,9 +36,6 @@ class vip_axi4_driver #(
 
   // Class variables
   protected virtual vip_axi4_if #(CFG_P) vif;
-  protected process _driver_process;
-  protected process _wvalid_process;
-  protected process _rvalid_process;
   protected int id;
   vip_axi4_config cfg;
 
@@ -47,7 +44,7 @@ class vip_axi4_driver #(
   protected uvm_event _ev_monitor_wdata;  // Write request
   protected uvm_event _ev_monitor_araddr; // Read request
   protected vip_axi4_item #(CFG_P) _araddr_queue [$];
-  protected vip_axi4_item #(CFG_P) _wdata_queue  [$];
+  protected vip_axi4_item #(CFG_P) _wdata_queue  [$]; // TODO
 
   // Memory
   protected logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] _memory [mem_addr_type_t];
@@ -119,13 +116,12 @@ class vip_axi4_driver #(
     join_none
 
     forever begin
+      @(posedge vif.rst_n);
       fork
-        begin
-          @(posedge vif.rst_n);
-          driver_start();
-          disable fork;
-        end
-      join
+        driver_start();
+      join_none
+      @(negedge vif.rst_n);
+      disable fork;
     end
   endtask
 
@@ -136,7 +132,6 @@ class vip_axi4_driver #(
 
     if (cfg.vip_axi4_agent_type == VIP_AXI4_MASTER_AGENT_E) begin
       fork
-        _driver_process = process::self();
         mst_get_and_drive();           // Get Write and Read requests
         drive_rready();                // Can be configured to be delayed
       join
@@ -144,7 +139,6 @@ class vip_axi4_driver #(
     else begin
       if (cfg.mem_slave == TRUE) begin
         fork
-          _driver_process = process::self();
           get_memory_write_requests(); // Passed from the Monitor via events
           drive_awready();             // De-assert awready when we have recieved too much wdata
           drive_wready();              // Can be configured to be delayed
@@ -154,7 +148,6 @@ class vip_axi4_driver #(
         join
       end else begin
         fork
-          _driver_process = process::self();
           slv_get_and_drive();         // Get Response requests
         join
       end
@@ -165,9 +158,6 @@ class vip_axi4_driver #(
   //
   // ---------------------------------------------------------------------------
   function void handle_reset();
-    if (_driver_process != null) begin
-      _driver_process.kill();
-    end
     _araddr_queue.delete();
     _wdata_queue.delete();
     _rdata_active = FALSE;
@@ -377,10 +367,7 @@ class vip_axi4_driver #(
 
       if (cfg.wvalid_delay_enabled) begin
         fork
-          begin
-            _wvalid_process = process::self();
-            drive_wvalid();
-          end
+          drive_wvalid();
         join_none
       end else begin
         vif.wvalid <= '1;
@@ -406,7 +393,7 @@ class vip_axi4_driver #(
 
         if (beat_counter == burst_length) begin
           if (cfg.wvalid_delay_enabled) begin
-            _wvalid_process.kill();
+            disable fork;
             vif.wvalid <= '0;
           end
         end
@@ -444,6 +431,12 @@ class vip_axi4_driver #(
     while (1) begin
 
       @(posedge vif.clk);
+      if (vif.wvalid === '1 && vif.wready === '1 && vif.wlast === '1) begin
+        @(posedge vif.clk);
+        vif.wvalid <= '0;
+        break;
+      end
+
       clock_counter++;
 
       if (clock_counter >= wvalid_delay_period &&
@@ -463,15 +456,17 @@ class vip_axi4_driver #(
   endtask
 
   // ---------------------------------------------------------------------------
-  // VIP_AXI4_SLAVE_AGENT_E & PASSIVE: Write Address Channel - awready
+  // VIP_AXI4_SLAVE_AGENT_E: Write Address Channel - awready
   // ---------------------------------------------------------------------------
   protected task drive_awready();
 
     forever begin
+
       @(posedge vif.clk);
       vif.awready <= '1;
-      wait (vif.awvalid === '1);
-      @(posedge vif.clk);
+      while (vif.awvalid !== '1) begin
+        @(posedge vif.clk);
+      end
 
       if (cfg.mem_awaddr_fifo_size != 0) begin
         while (_wdata_queue.size() >= cfg.mem_awaddr_fifo_size) begin
@@ -483,7 +478,7 @@ class vip_axi4_driver #(
   endtask
 
   // ---------------------------------------------------------------------------
-  // VIP_AXI4_SLAVE_AGENT_E & PASSIVE: Write Data Channel - wready
+  // VIP_AXI4_SLAVE_AGENT_E: Write Data Channel - wready
   // ---------------------------------------------------------------------------
   protected task drive_wready();
 
@@ -491,6 +486,7 @@ class vip_axi4_driver #(
       drive_wready_with_delay();
     end
 
+    @(posedge vif.clk);
     forever begin
       vif.wready <= '1;
       @(posedge vif.clk);
@@ -513,6 +509,7 @@ class vip_axi4_driver #(
     int wready_delay_time   = 0;
     int wready_delay_period = $urandom_range(cfg.max_wready_delay_period, cfg.min_wready_delay_period);
 
+    @(posedge vif.clk);
     forever begin
 
       vif.wready <= '1;
@@ -581,7 +578,9 @@ class vip_axi4_driver #(
 
       while (received_responses != requested_responses) begin
 
-        wait (vif.rvalid === '1 && vif.rready === '1 && vif.rlast === '1);
+        while (!(vif.rvalid === '1 && vif.rready === '1 && vif.rlast === '1)) begin
+          @(posedge vif.clk);
+        end
         while (rd_response_fifo.is_empty()) begin
           @(posedge vif.clk);
         end
@@ -606,16 +605,17 @@ class vip_axi4_driver #(
   endtask
 
   // ---------------------------------------------------------------------------
-  // VIP_AXI4_SLAVE_AGENT_E & PASSIVE: Read Address Channel
+  // VIP_AXI4_SLAVE_AGENT_E: Read Address Channel
   // ---------------------------------------------------------------------------
   protected task drive_arready();
 
-    forever begin
+    while (vif.rst_n === '1) begin
 
       @(posedge vif.clk);
       vif.arready <= '1;
-      wait (vif.arvalid);
-      @(posedge vif.clk);
+      while (vif.arvalid !== '0) begin
+        @(posedge vif.clk);
+      end
 
       if (cfg.mem_araddr_fifo_size != 0) begin
         while (_araddr_queue.size() >= cfg.mem_araddr_fifo_size) begin
@@ -666,7 +666,9 @@ class vip_axi4_driver #(
   // VIP_AXI4_MASTER_AGENT_E: Read Data Channel - rready
   // ---------------------------------------------------------------------------
   protected task drive_rready();
-    wait (vif.arvalid === '1); // Only start if the Agent requests a read
+    while (vif.arvalid !== '1) begin; // Only start if the Agent requests a read
+      @(posedge vif.clk);
+    end
     if (cfg.rready_delay_enabled) begin
       drive_rready_with_delay();
     end
@@ -711,7 +713,7 @@ class vip_axi4_driver #(
   endtask
 
   // ---------------------------------------------------------------------------
-  // VIP_AXI4_SLAVE_AGENT_E & PASSIVE: Write Data Channel
+  // VIP_AXI4_SLAVE_AGENT_E: Write Data Channel
   // ---------------------------------------------------------------------------
   protected task get_memory_write_requests();
 
@@ -830,7 +832,7 @@ class vip_axi4_driver #(
   endtask
 
   // ---------------------------------------------------------------------------
-  // VIP_AXI4_SLAVE_AGENT_E & PASSIVE: Read Data Channel
+  // VIP_AXI4_SLAVE_AGENT_E: Read Data Channel
   // Fetch read requests provided from the Monitor
   // ---------------------------------------------------------------------------
   protected task get_memory_read_requests();
@@ -865,10 +867,7 @@ class vip_axi4_driver #(
 
       if (cfg.rvalid_delay_enabled) begin
         fork
-          begin
-            _rvalid_process = process::self();
-            drive_rvalid();
-          end
+          drive_rvalid();
         join_none
       end else begin
         vif.rvalid <= '1;
@@ -898,7 +897,7 @@ class vip_axi4_driver #(
       end
 
       if (cfg.rvalid_delay_enabled) begin
-        _rvalid_process.kill();
+        disable fork;
       end
 
       _rdata_active = FALSE;
@@ -925,7 +924,6 @@ class vip_axi4_driver #(
       @(posedge vif.clk);
 
       if (vif.rvalid === '1 && vif.rready === '1 && vif.rlast === '1) begin
-        @(posedge vif.clk);
         vif.rvalid <= '0;
         break;
       end

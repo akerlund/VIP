@@ -92,10 +92,18 @@ class axi4_base_test extends uvm_test;
     axi4_rd_cfg1    = vip_axi4_config::type_id::create("axi4_rd_cfg1",   this);
     axi4_rd_cfg2    = vip_axi4_config::type_id::create("axi4_rd_cfg2",   this);
 
+    axi4_wr_cfg0.min_wvalid_delay_period = 10;
+    axi4_wr_cfg0.max_wvalid_delay_period = 10;
+
     axi4_mem_cfg0.vip_axi4_agent_type     = VIP_AXI4_SLAVE_AGENT_E;
     axi4_mem_cfg0.mem_slave               = TRUE;
+    axi4_mem_cfg0.min_wready_delay_period = 8;
     axi4_mem_cfg0.max_wready_delay_period = 8;
-    axi4_mem_cfg0.max_rready_delay_period = 8;
+    axi4_mem_cfg0.min_rvalid_delay_period = 8;
+    axi4_mem_cfg0.max_rvalid_delay_period = 8;
+
+    axi4_rd_cfg0.min_rready_delay_period = 10;
+    axi4_rd_cfg0.max_rready_delay_period = 10;
 
     axi4_rd_cfg1.vip_axi4_agent_type = VIP_AXI4_SLAVE_AGENT_E;
     axi4_rd_cfg1.monitor_merge_reads = FALSE;
@@ -147,6 +155,7 @@ class axi4_base_test extends uvm_test;
   task run_phase(uvm_phase phase);
     super.run_phase(phase);
     phase.raise_objection(this);
+    clk_delay(32);
     reset_seq0.start(v_sqr.clk_rst_sequencer0);
     phase.drop_objection(this);
   endtask

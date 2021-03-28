@@ -38,7 +38,6 @@ class vip_axi4_monitor #(
 
   // Class variables
   protected virtual vip_axi4_if #(CFG_P) vif;
-  protected process _monitor_process;
   protected int   id;
   vip_axi4_config cfg;
 
@@ -108,9 +107,10 @@ class vip_axi4_monitor #(
         begin
           @(posedge vif.rst_n);
           monitor_start();
-          disable fork;
         end
-      join
+      join_none
+      @(negedge vif.rst_n);
+      disable fork;
     end
   endtask
 
@@ -120,7 +120,6 @@ class vip_axi4_monitor #(
   protected task monitor_start();
     wait (!cfg.monitor_disabled);
     fork
-      _monitor_process = process::self();
       collect_write_channel();
       collect_read_channel();
     join
@@ -130,9 +129,6 @@ class vip_axi4_monitor #(
   //
   // ---------------------------------------------------------------------------
   function void handle_reset();
-    if (_monitor_process != null) begin
-      _monitor_process.kill();
-    end
     _awaddr_items.delete();
     _araddr_items.delete();
     _wdata_beats.delete();
