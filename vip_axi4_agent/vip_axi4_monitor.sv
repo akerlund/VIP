@@ -201,6 +201,14 @@ class vip_axi4_monitor #(
         wdata_item = new();
         wdata_item = _awaddr_items.pop_front();
 
+        if (wdata_item == null) begin
+          `uvm_fatal(get_name(), $sformatf("Fetched NULL object from the awaddr queue"))
+        end
+
+        if (wdata_item.awlen+1 != _wdata_beats.size()) begin
+          `uvm_warning(get_name(), $sformatf("Transaction length mismatch: awlen(%0d)+1 != #beats(%0d)", wdata_item.awlen+1, _wdata_beats.size()))
+        end
+
         wdata_item.wdata = new[_wdata_beats.size()];
         wdata_item.wstrb = new[_wstrb_beats.size()];
         wdata_item.wuser = new[_wuser_beats.size()];
@@ -313,8 +321,12 @@ class vip_axi4_monitor #(
 
             rdata_item = _araddr_items[channel_id].pop_front();
 
-            if (araddr_item == null) begin
+            if (rdata_item == null) begin
               `uvm_fatal(get_name(), $sformatf("Fetched NULL object with rid (%0d = %0h)", channel_id, channel_id))
+            end
+
+            if (rdata_item.arlen+1 != _rdata_beats.size()) begin
+              `uvm_warning(get_name(), $sformatf("Transaction length mismatch: arlen(%0d)+1 != #beats(%0d)", rdata_item.arlen+1, _rdata_beats.size()))
             end
           end
 

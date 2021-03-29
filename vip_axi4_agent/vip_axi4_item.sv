@@ -37,7 +37,7 @@ class vip_axi4_item #(
        logic                             [3 : 0] awcache  = '0;
        logic                             [2 : 0] awprot   = '0;
        logic                             [3 : 0] awqos    = '0;
-       logic                             [3 : 0] awregion = '0;
+  rand logic                             [3 : 0] awregion = '0;
        logic [CFG_P.VIP_AXI4_USER_WIDTH_P-1 : 0] awuser   = '0;
 
   // ---------------------------------------------------------------------------
@@ -67,7 +67,7 @@ class vip_axi4_item #(
        logic                             [3 : 0] arcache  = '0;
        logic                             [2 : 0] arprot   = '0;
        logic                             [3 : 0] arqos    = '0;
-       logic                             [3 : 0] arregion = '0;
+  rand logic                             [3 : 0] arregion = '0;
        logic [CFG_P.VIP_AXI4_USER_WIDTH_P-1 : 0] aruser   = '0;
 
   // ---------------------------------------------------------------------------
@@ -130,7 +130,7 @@ class vip_axi4_item #(
   endfunction
 
   function void set_counter_start(logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] start);
-    cfg.counter_start = start;
+    cfg.counter_data = start;
   endfunction
 
   function void set_custom_data(logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] data [$]);
@@ -157,8 +157,12 @@ class vip_axi4_item #(
 
   constraint con_awid {
     if (cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) {
-      awid >= cfg.min_id;
-      awid <= cfg.max_id;
+      if (cfg.axi4_id_type == VIP_AXI4_ID_COUNTER_E) {
+        awid == cfg.counter_id;
+      } else  {
+        awid >= cfg.min_id;
+        awid <= cfg.max_id;
+      }
     } else {
       awid == 0;
     }
@@ -220,7 +224,7 @@ class vip_axi4_item #(
     if (cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) {
       if (cfg.axi4_data_type == VIP_AXI4_DATA_COUNTER_E) {
         foreach (wdata[i]) {
-          wdata[i] == cfg.counter_start + i;
+          wdata[i] == cfg.counter_data + i;
         }
       } else if (cfg.axi4_data_type == VIP_AXI4_DATA_CUSTOM_E) {
         foreach (wdata[i]) {
@@ -243,9 +247,9 @@ class vip_axi4_item #(
       if (cfg.axi4_strb == VIP_AXI4_STRB_ALL_E) {
         foreach (wstrb[i]) {
           if (i == 0) {
-            wstrb[i] == 2**16 - 2**awaddr[3 : 0];
-          } else if (i == awlen && awaddr[3 : 0] != 0) {
-            wstrb[i] == 2**awaddr[3 : 0] - 1;
+            wstrb[i] == 2**CFG_P.VIP_AXI4_STRB_WIDTH_P - 2**awaddr[$clog2(CFG_P.VIP_AXI4_STRB_WIDTH_P)-1 : 0];
+          } else if (i == awlen && awaddr[$clog2(CFG_P.VIP_AXI4_STRB_WIDTH_P)-1 : 0] != 0) {
+            wstrb[i] == 2**awaddr[$clog2(CFG_P.VIP_AXI4_STRB_WIDTH_P)-1 : 0] - 1;
           } else {
             wstrb[i] == {CFG_P.VIP_AXI4_STRB_WIDTH_P{1'b1}};
           }
@@ -277,8 +281,14 @@ class vip_axi4_item #(
   constraint con_arid {
     if (cfg.axi4_access == VIP_AXI4_RD_REQUEST_E ||
         cfg.axi4_access == VIP_AXI4_RD_RESPONSE_E) {
-      arid <= cfg.max_id;
-      arid >= cfg.min_id;
+      if (cfg.axi4_id_type == VIP_AXI4_ID_COUNTER_E) {
+        arid == cfg.counter_id;
+      } else  {
+        arid >= cfg.min_id;
+        arid <= cfg.max_id;
+      }
+    } else {
+      arid == 0;
     }
   }
 
@@ -335,7 +345,7 @@ class vip_axi4_item #(
     if (cfg.axi4_access == VIP_AXI4_RD_RESPONSE_E) {
       if (cfg.axi4_data_type == VIP_AXI4_DATA_COUNTER_E) {
         foreach (rdata[i]) {
-          rdata[i] == cfg.counter_start + i;
+          rdata[i] == cfg.counter_data + i;
         }
       } else if (cfg.axi4_data_type == VIP_AXI4_DATA_CUSTOM_E) {
         foreach (rdata[i]) {

@@ -74,6 +74,11 @@ package vip_axi4_types_pkg;
   } vip_axi4_access_t;
 
   typedef enum {
+    VIP_AXI4_ID_COUNTER_E,
+    VIP_AXI4_ID_RANDOM_E
+  } vip_axi4_id_type_t;
+
+  typedef enum {
     VIP_AXI4_DATA_COUNTER_E,
     VIP_AXI4_DATA_RANDOM_E,
     VIP_AXI4_DATA_CUSTOM_E

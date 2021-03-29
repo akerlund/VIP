@@ -98,6 +98,11 @@ class vip_axi4_base_seq extends uvm_sequence #(vip_axi4_item #(VIP_AXI4_CFG_C));
   endfunction
 
 
+  function void set_id_type(vip_axi4_id_type_t axi4_id_type);
+    _cfg.axi4_id_type = axi4_id_type;
+  endfunction
+
+
   function void set_data_type(vip_axi4_data_type_t axi4_data_type);
     _cfg.axi4_data_type = axi4_data_type;
   endfunction
@@ -272,6 +277,9 @@ class vip_axi4_base_seq extends uvm_sequence #(vip_axi4_item #(VIP_AXI4_CFG_C));
     if (_cfg.axi4_data_type == VIP_AXI4_DATA_COUNTER_E) begin
       _counter = _cfg.axi4_access == VIP_AXI4_WR_REQUEST_E ? _counter + req.awlen + 1 :
                                                              _counter + req.arlen + 1;
+    end
+    if (_cfg.axi4_id_type == VIP_AXI4_ID_COUNTER_E) begin
+      _cfg.counter_id++;
     end
   endfunction
 
