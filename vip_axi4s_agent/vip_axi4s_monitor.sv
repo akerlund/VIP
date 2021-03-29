@@ -24,11 +24,10 @@ class vip_axi4s_monitor #(
   ) extends uvm_monitor;
 
   // Analysis ports
-  uvm_analysis_port #(vip_axi4s_item #(CFG_P)) collected_port;
+  uvm_analysis_port #(vip_axi4s_item #(CFG_P)) tdata_port;
 
   // Class variables
   protected virtual vip_axi4s_if #(CFG_P) vif;
-  protected process _monitor_process;
   protected int    id;
   vip_axi4s_config cfg;
 
@@ -48,7 +47,7 @@ class vip_axi4s_monitor #(
   // ---------------------------------------------------------------------------
   function new(string name, uvm_component parent);
     super.new(name, parent);
-    collected_port = new("collected_port", this);
+    tdata_port = new("tdata_port", this);
   endfunction
 
   // ---------------------------------------------------------------------------
@@ -66,13 +65,12 @@ class vip_axi4s_monitor #(
   // ---------------------------------------------------------------------------
   virtual task run_phase(uvm_phase phase);
     forever begin
+      @(posedge vif.rst_n);
       fork
-        begin
-          @(posedge vif.rst_n);
-          monitor_start();
-          disable fork;
-        end
+        monitor_start();
       join
+      @(negedge vif.rst_n);
+      disable fork;
     end
   endtask
 
@@ -81,7 +79,6 @@ class vip_axi4s_monitor #(
   // ---------------------------------------------------------------------------
   protected task monitor_start();
     fork
-      _monitor_process = process::self();
       collect_transfers();
     join
   endtask
@@ -90,9 +87,6 @@ class vip_axi4s_monitor #(
   //
   // ---------------------------------------------------------------------------
   function void handle_reset();
-    if (_monitor_process != null) begin
-      _monitor_process.kill();
-    end
     _tdata_beats.delete();
     _tstrb_beats.delete();
     _tkeep_beats.delete();
@@ -136,7 +130,7 @@ class vip_axi4s_monitor #(
         _tuser_beats.delete();
 
         `uvm_info(get_type_name(), $sformatf("Collected transfer:\n%s", axi4s_item.sprint()), UVM_HIGH)
-        collected_port.write(axi4s_item);
+        tdata_port.write(axi4s_item);
       end
     end
   endtask

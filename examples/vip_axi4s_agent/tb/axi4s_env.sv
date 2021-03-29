@@ -74,9 +74,8 @@ class axi4s_env extends uvm_env;
 
     super.connect_phase(phase);
 
-    mst_agent0.monitor.collected_port.connect(scoreboard0.mst_port);
-    slv_agent0.monitor.collected_port.connect(scoreboard0.slv_port);
-
+    mst_agent0.monitor.tdata_port.connect(scoreboard0.mst_port);
+    slv_agent0.monitor.tdata_port.connect(scoreboard0.slv_port);
 
     // Connect the Agents' sequencers to the virtual sequencer
     virtual_sequencer.clk_rst_sequencer0 = clk_rst_agent0.sequencer;

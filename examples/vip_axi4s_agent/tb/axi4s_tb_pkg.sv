@@ -31,7 +31,7 @@ package axi4s_tb_pkg;
   import vip_axi4s_types_pkg::*;
   import vip_axi4s_agent_pkg::*;
 
-  localparam int VIP_AXI4S_TDATA_WIDTH_C = 128;
+  localparam int VIP_AXI4S_TDATA_WIDTH_C = 32;
   localparam int VIP_AXI4S_TSTRB_WIDTH_C = VIP_AXI4S_TDATA_WIDTH_C/8;
   localparam int VIP_AXI4S_TKEEP_WIDTH_C = 0;
   localparam int VIP_AXI4S_TID_WIDTH_C   = 11;

@@ -88,8 +88,25 @@ class axi4s_scoreboard extends uvm_scoreboard;
   // ---------------------------------------------------------------------------
   function void check_phase(uvm_phase phase);
 
+    vip_axi4s_item #(VIP_AXI4S_CFG_C) mst_item;
+    vip_axi4s_item #(VIP_AXI4S_CFG_C) slv_item;
+
     current_phase = phase;
     super.check_phase(current_phase);
+
+    while (mst_items.size()) begin
+      mst_item = mst_items.pop_front();
+      slv_item = slv_items.pop_front();
+      if (mst_item == null) begin `uvm_fatal(get_name(), $sformatf("Fetched mst_item NULL object")) end
+      if (slv_item == null) begin `uvm_fatal(get_name(), $sformatf("Fetched slv_item NULL object")) end
+      if (!mst_item.compare(slv_item)) begin
+        number_of_failed++;
+        `uvm_error(get_name(), $sformatf("compare_read1: Packet number (%0d) mismatches", number_of_compared))
+      end else begin
+        number_of_passed++;
+      end
+      number_of_compared++;
+    end
 
     if (number_of_failed != 0) begin
       `uvm_error(get_name(), $sformatf("Test failed! (%0d) mismatches", number_of_failed))

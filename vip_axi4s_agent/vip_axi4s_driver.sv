@@ -24,8 +24,6 @@ class vip_axi4s_driver #(
   ) extends uvm_driver #(vip_axi4s_item #(CFG_P));
 
   protected virtual vip_axi4s_if #(CFG_P) vif;
-  protected process _driver_process;
-  protected process _tvalid_process;
   protected int    id;
   vip_axi4s_config cfg;
 
@@ -61,13 +59,12 @@ class vip_axi4s_driver #(
     join_none
 
     forever begin
+      @(posedge vif.rst_n);
       fork
-        begin
-          @(posedge vif.rst_n);
-          driver_start();
-          disable fork;
-        end
-      join
+        driver_start();
+      join_none
+      @(negedge vif.rst_n);
+      disable fork;
     end
   endtask
 
@@ -77,12 +74,10 @@ class vip_axi4s_driver #(
   task driver_start();
     if (cfg.vip_axi4s_agent_type == VIP_AXI4S_MASTER_AGENT_E) begin
       fork
-        _driver_process = process::self();
         master_drive();
       join
     end else begin
       fork
-        _driver_process = process::self();
         master_drive();
       join
     end
@@ -92,9 +87,6 @@ class vip_axi4s_driver #(
   //
   // ---------------------------------------------------------------------------
   function void handle_reset();
-    if (_driver_process != null) begin
-      _driver_process.kill();
-    end
   endfunction
 
   // ---------------------------------------------------------------------------
@@ -149,7 +141,6 @@ class vip_axi4s_driver #(
     if (cfg.tvalid_delay_enabled) begin
       fork
         begin
-          _tvalid_process = process::self();
           drive_tvalid();
         end
       join_none
@@ -171,13 +162,12 @@ class vip_axi4s_driver #(
       end
 
       @(posedge vif.clk);
-      while (!(vif.tready === '1 && vif.tready === '1)) begin
+      while (!(vif.tvalid === '1 && vif.tready === '1)) begin
         @(posedge vif.clk);
       end
 
       if (beat_counter == burst_length) begin
         if (cfg.tvalid_delay_enabled) begin
-          _tvalid_process.kill();
           vif.tvalid <= '0;
         end
       end
@@ -198,6 +188,12 @@ class vip_axi4s_driver #(
     while (1) begin
 
       @(posedge vif.clk);
+      if (vif.tvalid === '1 && vif.tready === '1 && vif.tlast === '1) begin
+        @(posedge vif.clk);
+        vif.tvalid <= '0;
+        break;
+      end
+
       clock_counter++;
 
       if (clock_counter >= tvalid_delay_period &&
