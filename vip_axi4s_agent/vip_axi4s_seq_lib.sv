@@ -37,13 +37,15 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
 
   typedef logic [`__DATA_RANGE] custom_data_t [$];
 
-  protected bool_t                  _verbose            = TRUE;
-  protected int                     _log_denominator    = 100;
+  protected bool_t                  _verbose                = TRUE;
+  protected int                     _log_denominator        = 100;
   protected `__CFG                  _cfg;
-  protected logic   [`__DEST_RANGE] _tdest               = '0;
-  protected logic   [`__DEST_RANGE] _dest_increment     = '0;
-  protected logic   [`__DATA_RANGE] _counter            = '0;
-  protected int                     _nr_of_bursts       = 1;
+  protected logic   [`__DEST_RANGE] _tdest                  = '0;
+  protected bool_t                  _enable_tdest_increment = TRUE;
+  protected logic   [`__DEST_RANGE] _tdest_increment        = '0;
+  protected logic   [`__DEST_RANGE] _dest_increment         = '0;
+  protected logic   [`__DATA_RANGE] _counter                = '0;
+  protected int                     _nr_of_bursts           = 1;
   protected logic   [`__DATA_RANGE] _custom_data  [$];
 
   function new(string name = "vip_axi4s_base_seq");
@@ -87,6 +89,11 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
 
   function int get_counter();
     get_counter = _counter;
+  endfunction
+
+
+  function void set_enable_tdest_increment(bool_t enable_tdest_increment);
+    _enable_tdest_increment = enable_tdest_increment;
   endfunction
 
 
@@ -159,7 +166,14 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
       finish_item(req);
 
       _counter += req.burst_length;
-      set_tdest(_tdest + req.burst_length*VIP_AXI4S_CFG_C.VIP_AXI4S_TSTRB_WIDTH_P);
+
+      if (_enable_tdest_increment) begin
+        if (_tdest_increment == '0) begin
+          set_tdest(_tdest + req.burst_length*VIP_AXI4S_CFG_C.VIP_AXI4S_TSTRB_WIDTH_P);
+        end else begin
+          set_tdest(_tdest + _tdest_increment);
+        end
+      end
 
     end
   endtask
