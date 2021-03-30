@@ -78,7 +78,7 @@ class vip_axi4s_driver #(
       join
     end else begin
       fork
-        master_drive();
+        slave_drive();
       join
     end
   endtask
@@ -94,11 +94,9 @@ class vip_axi4s_driver #(
   // ---------------------------------------------------------------------------
   protected task reset_vif();
 
-    forever begin
-
-      @(negedge vif.rst_n);
-
-      if (cfg.vip_axi4s_agent_type == VIP_AXI4S_MASTER_AGENT_E) begin
+    if (cfg.vip_axi4s_agent_type == VIP_AXI4S_MASTER_AGENT_E) begin
+      forever begin
+        @(negedge vif.rst_n);
         vif.tvalid <= '0;
         vif.tdata  <= '0;
         vif.tstrb  <= '0;
@@ -108,7 +106,9 @@ class vip_axi4s_driver #(
         vif.tdest  <= '0;
         vif.tuser  <= '0;
       end
-      else begin
+    end else begin
+      forever begin
+        @(negedge vif.rst_n);
         vif.tready <= '0;
       end
     end
@@ -215,9 +215,7 @@ class vip_axi4s_driver #(
   //
   // ---------------------------------------------------------------------------
   protected task slave_drive();
-    forever begin
-      drive_tready();
-    end
+    drive_tready();
   endtask
 
   // ---------------------------------------------------------------------------
@@ -259,7 +257,6 @@ class vip_axi4s_driver #(
       end
       vif.tready <= '0;
     end
-
   endtask
 
 endclass

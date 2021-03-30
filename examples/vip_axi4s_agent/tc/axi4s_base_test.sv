@@ -80,11 +80,10 @@ class axi4s_base_test extends uvm_test;
     axi4s_mst_cfg0  = vip_axi4s_config::type_id::create("axi4s_mst_cfg0", this);
     axi4s_slv_cfg0  = vip_axi4s_config::type_id::create("axi4s_slv_cfg0", this);
 
-    axi4s_mst_cfg0.min_tvalid_delay_period = 10;
+    axi4s_mst_cfg0.min_tvalid_delay_period = 2;
     axi4s_mst_cfg0.max_tvalid_delay_period = 10;
-    axi4s_slv_cfg0.min_tready_delay_period = 10;
+    axi4s_slv_cfg0.min_tready_delay_period = 2;
     axi4s_slv_cfg0.max_tready_delay_period = 10;
-    axi4s_slv_cfg0.is_active               = UVM_PASSIVE;
     axi4s_slv_cfg0.vip_axi4s_agent_type    = VIP_AXI4S_SLAVE_AGENT_E;
 
     uvm_config_db #(clk_rst_config)::set(this,   {"tb_env.clk_rst_agent0", "*"}, "cfg", clk_rst_config0);

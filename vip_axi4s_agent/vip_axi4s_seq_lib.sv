@@ -38,21 +38,30 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
   typedef logic [`__DATA_RANGE] custom_data_t [$];
 
   protected bool_t                  _verbose            = TRUE;
+  protected int                     _log_denominator    = 100;
   protected `__CFG                  _cfg;
-  protected logic   [`__DEST_RANGE] _dest               = '0;
+  protected logic   [`__DEST_RANGE] _tdest               = '0;
   protected logic   [`__DEST_RANGE] _dest_increment     = '0;
   protected logic   [`__DATA_RANGE] _counter            = '0;
+  protected int                     _nr_of_bursts       = 1;
   protected logic   [`__DATA_RANGE] _custom_data  [$];
 
   function new(string name = "vip_axi4s_base_seq");
     super.new(name);
     _cfg = new();
-    _cfg.max_tid = 2**VIP_AXI4S_CFG_C.VIP_AXI4S_TID_WIDTH_P-1;
+    _cfg.max_tid          = 2**VIP_AXI4S_CFG_C.VIP_AXI4S_TID_WIDTH_P-1;
+    _cfg.max_tdest        = 2**VIP_AXI4S_CFG_C.VIP_AXI4S_TDEST_WIDTH_P-1;
+    _cfg.max_burst_length = 256;
   endfunction
 
 
   function void set_verbose(bool_t verbose);
     _verbose = verbose;
+  endfunction
+
+
+  function void set_log_denominator(int log_denominator);
+    _log_denominator = log_denominator;
   endfunction
 
 
@@ -63,6 +72,11 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
 
   function void set_custom_data(custom_data_t custom_data);
     _custom_data = custom_data;
+  endfunction
+
+
+  function void set_nr_of_bursts(int nr_of_bursts);
+    _nr_of_bursts = nr_of_bursts;
   endfunction
 
 
@@ -81,10 +95,16 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
   endfunction
 
 
-  function void set_dest(logic [`__DEST_RANGE] dest);
-    _dest          = dest;
-    _cfg.min_tdest = dest;
-    _cfg.max_tdest = dest;
+  function void set_tid(logic [`__DEST_RANGE] tid);
+    _cfg.min_tdest = tid;
+    _cfg.max_tdest = tid;
+  endfunction
+
+
+  function void set_tdest(logic [`__DEST_RANGE] tdest);
+    _tdest         = tdest;
+    _cfg.min_tdest = tdest;
+    _cfg.max_tdest = tdest;
   endfunction
 
 
@@ -111,26 +131,38 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
   endfunction
 
 
+  function void set_cfg_burst_length(int max_burst_length, int min_burst_length);
+    _cfg.max_burst_length = max_burst_length;
+    _cfg.min_burst_length = min_burst_length;
+  endfunction
+
+
   task body();
 
-    req = new();
-    req.set_config(_cfg);
-    req.set_counter_start(_counter);
-    if (_cfg.axi4s_tdata_type == VIP_AXI4S_TDATA_CUSTOM_E) begin
-      req.set_custom_data(_custom_data);
+    for (int i = 0; i < _nr_of_bursts; i++) begin
+
+      if (_verbose == TRUE && (i % _log_denominator == 0 || i == _nr_of_bursts-1)) begin
+        `uvm_info(get_name(), $sformatf("%s (%0d/%0d)", "Burst", i+1, _nr_of_bursts), UVM_LOW)
+      end
+
+      req = new();
+      req.set_config(_cfg);
+      req.set_counter_start(_counter);
+      if (_cfg.axi4s_tdata_type == VIP_AXI4S_TDATA_CUSTOM_E) begin
+        req.set_custom_data(_custom_data);
+      end
+
+      if (!req.randomize()) begin
+        `uvm_error(get_name(), $sformatf("randomize() failed"))
+      end
+      start_item(req);
+      finish_item(req);
+
+      _counter += req.burst_length;
+      set_tdest(_tdest + req.burst_length*VIP_AXI4S_CFG_C.VIP_AXI4S_TSTRB_WIDTH_P);
+
     end
-
-    if (!req.randomize()) begin
-      `uvm_error(get_name(), $sformatf("randomize() failed"))
-    end
-    start_item(req);
-    finish_item(req);
-
-    _counter += req.burst_length;
-    set_dest(_dest + req.burst_length*VIP_AXI4S_CFG_C.VIP_AXI4S_TSTRB_WIDTH_P);
-
   endtask
-
 endclass
 
 // -----------------------------------------------------------------------------
