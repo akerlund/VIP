@@ -153,6 +153,12 @@ class vip_axi4_item #(
           `uvm_fatal(get_name(), "Data size and len are mismatching")
     end
 
+    if (cfg.enable_boundary == TRUE) begin
+      if ($countones(cfg.addr_boundary) != 1 && cfg.addr_boundary != '0) begin
+        `uvm_fatal(get_name(), "An address boundary must be a power of two")
+      end
+    end
+
   endfunction
 
   constraint con_awid {
@@ -168,7 +174,7 @@ class vip_axi4_item #(
     }
   }
 
-  constraint con_awaddr_4k_boundary {
+  constraint con_awaddr {
     if (cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) {
       awaddr         >= cfg.min_addr;
       awaddr         <= cfg.max_addr;
@@ -176,6 +182,9 @@ class vip_axi4_item #(
       //   araddr < 4096 -  1 * 16 = 4080
       //   araddr < 4096 - 16 * 16 = 3840
       awaddr[11 : 0] <= VIP_AXI4_4K_ADDRESS_BOUNDARY_C - ((unsigned'(awlen) + 1) * CFG_P.VIP_AXI4_STRB_WIDTH_P);
+      if (cfg.enable_boundary == TRUE) {
+        awaddr[$clog2(CFG_P.VIP_AXI4_STRB_WIDTH_P)-1 : 0] % cfg.addr_boundary == 0;
+      }
     } else {
       awaddr == 0;
     }
@@ -292,11 +301,14 @@ class vip_axi4_item #(
     }
   }
 
-  constraint con_araddr_4k_boundary {
+  constraint con_araddr {
     if (cfg.axi4_access == VIP_AXI4_RD_REQUEST_E) {
       araddr >= cfg.min_addr;
       araddr <= cfg.max_addr;
       araddr[11 : 0] <= VIP_AXI4_4K_ADDRESS_BOUNDARY_C - ((unsigned'(arlen) + 1) * CFG_P.VIP_AXI4_STRB_WIDTH_P);
+      if (cfg.enable_boundary == TRUE) {
+        araddr[$clog2(CFG_P.VIP_AXI4_STRB_WIDTH_P)-1 : 0] % cfg.addr_boundary == 0;
+      }
     } else {
       araddr == 0;
     }

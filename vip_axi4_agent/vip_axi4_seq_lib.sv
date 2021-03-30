@@ -42,16 +42,17 @@ class vip_axi4_base_seq extends uvm_sequence #(vip_axi4_item #(VIP_AXI4_CFG_C));
   typedef vip_axi4_item #(VIP_AXI4_CFG_C) rd_responses_t [$];
   typedef logic [`__DATA_RANGE]           custom_data_t  [$];
 
-  protected bool_t                  _verbose            = TRUE;
-  protected int                     _log_denominator    = 100;
-  protected string                  _log_access_type    = "Write";
+  protected bool_t                  _verbose               = TRUE;
+  protected int                     _log_denominator       = 100;
+  protected string                  _log_access_type       = "Write";
   protected `__CFG                  _cfg;
-  protected logic   [`__ADDR_RANGE] _addr               = '0;
-  protected logic   [`__ADDR_RANGE] _addr_increment     = '0;
-  protected int                     _addr_boundary      = VIP_AXI4_4K_ADDRESS_BOUNDARY_C;
-  protected logic   [`__DATA_RANGE] _counter            = '0;
-  protected int                     _nr_of_requests     = 0;
-  protected bool_t                  _combine_requests   = FALSE;
+  protected logic   [`__ADDR_RANGE] _addr                  = '0;
+  protected bool_t                  _enable_addr_increment = TRUE;
+  protected logic   [`__ADDR_RANGE] _addr_increment        = '0;
+  protected int                     _addr_boundary         = VIP_AXI4_4K_ADDRESS_BOUNDARY_C;
+  protected logic   [`__DATA_RANGE] _counter               = '0;
+  protected int                     _nr_of_requests        = 0;
+  protected bool_t                  _combine_requests      = FALSE;
   protected logic   [`__DATA_RANGE] _custom_data  [$];
   protected `__ITEM                 _rd_responses [$];
   protected `__ITEM                 _rd_response;
@@ -138,8 +139,18 @@ class vip_axi4_base_seq extends uvm_sequence #(vip_axi4_item #(VIP_AXI4_CFG_C));
   endfunction
 
 
+  function void set_enable_addr_boundary(bool_t enable_boundary);
+    _cfg.enable_boundary = enable_boundary;
+  endfunction
+
+
   function void set_addr_boundary(int addr_boundary);
-    _addr_boundary = addr_boundary;
+    _cfg.addr_boundary = addr_boundary;
+  endfunction
+
+
+  function void set_enable_addr_increment(longint enable_addr_increment);
+    _enable_addr_increment = enable_addr_increment;
   endfunction
 
 
@@ -285,14 +296,16 @@ class vip_axi4_base_seq extends uvm_sequence #(vip_axi4_item #(VIP_AXI4_CFG_C));
 
 
   protected function void increase_address();
-    if (_addr_increment == '0) begin
-      if (_cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) begin
-        set_addr(_addr + (req.awlen + 1)*VIP_AXI4_CFG_C.VIP_AXI4_STRB_WIDTH_P);
+    if (_enable_addr_increment == TRUE) begin
+      if (_addr_increment == '0) begin
+        if (_cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) begin
+          set_addr(_addr + (req.awlen + 1)*VIP_AXI4_CFG_C.VIP_AXI4_STRB_WIDTH_P);
+        end else begin
+          set_addr(_addr + (req.arlen + 1)*VIP_AXI4_CFG_C.VIP_AXI4_STRB_WIDTH_P);
+        end
       end else begin
-        set_addr(_addr + (req.arlen + 1)*VIP_AXI4_CFG_C.VIP_AXI4_STRB_WIDTH_P);
+        set_addr(_addr + _addr_increment);
       end
-    end else begin
-      set_addr(_addr + _addr_increment);
     end
   endfunction
 
