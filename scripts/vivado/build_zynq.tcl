@@ -83,7 +83,14 @@ proc build_zynq { _project_name _rundir        _fpga_part \
       set_property used_in_simulation false [get_files $_constraint]
     }
   }
-
+  puts "--------------------------------------------------------------------------------"
+  puts "INFO \[project\] Synthesis"
+  puts "--------------------------------------------------------------------------------"
+  launch_runs synth_1 -jobs 12
+  wait_on_run synth_1 -quiet
+  puts "--------------------------------------------------------------------------------"
+  puts "INFO \[project\] Implementation"
+  puts "--------------------------------------------------------------------------------"
   launch_runs impl_1 -to_step write_bitstream -jobs 12 -verbose
   wait_on_run impl_1 -quiet
 
