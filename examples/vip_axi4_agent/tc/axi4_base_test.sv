@@ -57,10 +57,10 @@ class axi4_base_test extends uvm_test;
   // Sequences
   // ---------------------------------------------------------------------------
 
-  reset_sequence        reset_seq0;
-  vip_axi4_write_seq    vip_axi4_write_seq0;
-  vip_axi4_read_seq     vip_axi4_read_seq0;
-  vip_axi4_response_seq vip_axi4_response_seq0;
+  reset_sequence                          reset_seq0;
+  vip_axi4_write_seq    #(VIP_AXI4_CFG_C) vip_axi4_write_seq0;
+  vip_axi4_read_seq     #(VIP_AXI4_CFG_C) vip_axi4_read_seq0;
+  vip_axi4_response_seq #(VIP_AXI4_CFG_C) vip_axi4_response_seq0;
 
   function new(string name = "axi4_base_test", uvm_component parent = null);
     super.new(name, parent);
@@ -146,9 +146,9 @@ class axi4_base_test extends uvm_test;
   function void start_of_simulation_phase(uvm_phase phase);
     super.start_of_simulation_phase(phase);
     reset_seq0             = reset_sequence::type_id::create("reset_seq0");
-    vip_axi4_write_seq0    = vip_axi4_write_seq::type_id::create("vip_axi4_write_seq0");
-    vip_axi4_read_seq0     = vip_axi4_read_seq::type_id::create("vip_axi4_read_seq0");
-    vip_axi4_response_seq0 = vip_axi4_response_seq::type_id::create("vip_axi4_response_seq0");
+    vip_axi4_write_seq0    = vip_axi4_write_seq#(VIP_AXI4_CFG_C)::type_id::create("vip_axi4_write_seq0");
+    vip_axi4_read_seq0     = vip_axi4_read_seq#(VIP_AXI4_CFG_C)::type_id::create("vip_axi4_read_seq0");
+    vip_axi4_response_seq0 = vip_axi4_response_seq#(VIP_AXI4_CFG_C)::type_id::create("vip_axi4_response_seq0");
   endfunction
 
 

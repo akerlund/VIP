@@ -223,7 +223,7 @@ class vip_axi4_monitor #(
 
         wdata_port.write(wdata_item);
 
-        if (cfg.vip_axi4_agent_type == VIP_AXI4_SLAVE_AGENT_E && cfg.mem_enabled == TRUE) begin
+        if (cfg.vip_axi4_agent_type == VIP_AXI4_SLAVE_AGENT_E && cfg.mem_slave == TRUE) begin
           _ev_monitor_wdata.trigger(wdata_item);
         end
 

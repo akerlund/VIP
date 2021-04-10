@@ -147,12 +147,6 @@ class vip_axi4_item #(
       `uvm_fatal("NOCFG", "AXI4 Item has no config")
     end
 
-    if (cfg.axi4_data_type   == VIP_AXI4_DATA_CUSTOM_E &&
-        custom_data.size()-1 != cfg.min_len            &&
-        cfg.min_len          != cfg.max_len) begin
-          `uvm_fatal(get_name(), "Data size and len are mismatching")
-    end
-
     if (cfg.enable_boundary == TRUE) begin
       if ($countones(cfg.addr_boundary) != 1 && cfg.addr_boundary != '0) begin
         `uvm_fatal(get_name(), "An address boundary must be a power of two")
