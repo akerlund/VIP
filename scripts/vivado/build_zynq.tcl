@@ -91,6 +91,10 @@ proc build_zynq { _project_name _rundir        _fpga_part \
   puts "--------------------------------------------------------------------------------"
   puts "INFO \[project\] Implementation"
   puts "--------------------------------------------------------------------------------"
+
+  set_property strategy  Congestion_SpreadLogic_medium [get_runs impl_1]
+  set_property STEPS.PHYS_OPT_DESIGN.ARGS.DIRECTIVE AggressiveFanoutOpt [get_runs impl_1]
+
   launch_runs impl_1 -to_step write_bitstream -jobs 12 -verbose
   wait_on_run impl_1 -quiet
 
