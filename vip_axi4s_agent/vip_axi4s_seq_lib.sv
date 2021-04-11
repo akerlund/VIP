@@ -1,6 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Copyright (C) 2021 Fredrik Åkerlund
+// https://github.com/akerlund/VIP
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -26,27 +27,18 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
 
   `uvm_object_utils(vip_axi4s_base_seq)
 
-  `ifndef VIP_AXI4S_BASE_SEQ_MACRO
-  `define VIP_AXI4S_BASE_SEQ_MACRO
-  `define __DATA_RANGE VIP_AXI4S_CFG_C.VIP_AXI4S_TDATA_WIDTH_P-1 : 0
-  `define __STRB_RANGE VIP_AXI4S_CFG_C.VIP_AXI4S_TSTRB_WIDTH_P-1 : 0
-  `define __DEST_RANGE VIP_AXI4S_CFG_C.VIP_AXI4S_TDEST_WIDTH_P-1 : 0
-  `define __ITEM       vip_axi4s_item #(VIP_AXI4S_CFG_C)
-  `define __CFG        vip_axi4s_item_config
-  `endif
+  typedef logic [VIP_AXI4S_CFG_C.VIP_AXI4S_TDATA_WIDTH_P-1 : 0] custom_data_t [$];
 
-  typedef logic [`__DATA_RANGE] custom_data_t [$];
-
-  protected bool_t                  _verbose                = TRUE;
-  protected int                     _log_denominator        = 100;
-  protected `__CFG                  _cfg;
-  protected logic   [`__DEST_RANGE] _tdest                  = '0;
-  protected bool_t                  _enable_tdest_increment = TRUE;
-  protected logic   [`__DEST_RANGE] _tdest_increment        = '0;
-  protected logic   [`__DEST_RANGE] _dest_increment         = '0;
-  protected logic   [`__DATA_RANGE] _counter                = '0;
-  protected int                     _nr_of_bursts           = 1;
-  protected logic   [`__DATA_RANGE] _custom_data  [$];
+  protected bool_t                                                  _verbose                = TRUE;
+  protected int                                                     _log_denominator        = 100;
+  protected vip_axi4s_item_config                                   _cfg;
+  protected logic   [VIP_AXI4S_CFG_C.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] _tdest                  = '0;
+  protected bool_t                                                  _enable_tdest_increment = TRUE;
+  protected logic   [VIP_AXI4S_CFG_C.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] _tdest_increment        = '0;
+  protected logic   [VIP_AXI4S_CFG_C.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] _dest_increment         = '0;
+  protected logic   [VIP_AXI4S_CFG_C.VIP_AXI4S_TDATA_WIDTH_P-1 : 0] _counter                = '0;
+  protected int                                                     _nr_of_bursts           = 1;
+  protected logic   [VIP_AXI4S_CFG_C.VIP_AXI4S_TDATA_WIDTH_P-1 : 0] _custom_data  [$];
 
   function new(string name = "vip_axi4s_base_seq");
     super.new(name);
@@ -69,6 +61,9 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
 
   function void set_data_type(vip_axi4s_tdata_type_t axi4s_tdata_type);
     _cfg.axi4s_tdata_type = axi4s_tdata_type;
+    if (_cfg.axi4s_tdata_type == VIP_AXI4S_TDATA_CUSTOM_E) begin
+      _nr_of_bursts = 1;
+    end
   endfunction
 
 
@@ -102,13 +97,13 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
   endfunction
 
 
-  function void set_tid(logic [`__DEST_RANGE] tid);
+  function void set_tid(logic [VIP_AXI4S_CFG_C.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] tid);
     _cfg.min_tdest = tid;
     _cfg.max_tdest = tid;
   endfunction
 
 
-  function void set_tdest(logic [`__DEST_RANGE] tdest);
+  function void set_tdest(logic [VIP_AXI4S_CFG_C.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] tdest);
     _tdest         = tdest;
     _cfg.min_tdest = tdest;
     _cfg.max_tdest = tdest;
@@ -153,15 +148,17 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
       end
 
       req = new();
-      req.set_config(_cfg);
-      req.set_counter_start(_counter);
       if (_cfg.axi4s_tdata_type == VIP_AXI4S_TDATA_CUSTOM_E) begin
         req.set_custom_data(_custom_data);
+        set_burst_length(_custom_data.size());
       end
+      req.set_config(_cfg);
+      req.set_counter_start(_counter);
 
       if (!req.randomize()) begin
         `uvm_error(get_name(), $sformatf("randomize() failed"))
       end
+
       start_item(req);
       finish_item(req);
 
