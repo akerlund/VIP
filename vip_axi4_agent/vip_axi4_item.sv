@@ -177,7 +177,7 @@ class vip_axi4_item #(
       //   araddr < 4096 - 16 * 16 = 3840
       awaddr[11 : 0] <= VIP_AXI4_4K_ADDRESS_BOUNDARY_C - ((unsigned'(awlen) + 1) * CFG_P.VIP_AXI4_STRB_WIDTH_P);
       if (cfg.enable_boundary == TRUE) {
-        awaddr[$clog2(CFG_P.VIP_AXI4_STRB_WIDTH_P)-1 : 0] % cfg.addr_boundary == 0;
+        awaddr % cfg.addr_boundary == 0;
       }
     } else {
       awaddr == 0;
@@ -301,7 +301,7 @@ class vip_axi4_item #(
       araddr <= cfg.max_addr;
       araddr[11 : 0] <= VIP_AXI4_4K_ADDRESS_BOUNDARY_C - ((unsigned'(arlen) + 1) * CFG_P.VIP_AXI4_STRB_WIDTH_P);
       if (cfg.enable_boundary == TRUE) {
-        araddr[$clog2(CFG_P.VIP_AXI4_STRB_WIDTH_P)-1 : 0] % cfg.addr_boundary == 0;
+        araddr % cfg.addr_boundary == 0;
       }
     } else {
       araddr == 0;
