@@ -23,9 +23,10 @@
 // -----------------------------------------------------------------------------
 // Base Sequence
 // -----------------------------------------------------------------------------
-class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C));
+class vip_axi4s_base_seq #(vip_axi4s_cfg_t CFG_P = '{default: '0})
+  extends uvm_sequence #(vip_axi4s_item #(CFG_P));
 
-  `uvm_object_utils(vip_axi4s_base_seq)
+  `uvm_object_param_utils(vip_axi4s_base_seq #(CFG_P))
 
   typedef logic [VIP_AXI4S_CFG_C.VIP_AXI4S_TDATA_WIDTH_P-1 : 0] custom_data_t [$];
 
@@ -35,7 +36,6 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
   protected logic   [VIP_AXI4S_CFG_C.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] _tdest                  = '0;
   protected bool_t                                                  _enable_tdest_increment = TRUE;
   protected logic   [VIP_AXI4S_CFG_C.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] _tdest_increment        = '0;
-  protected logic   [VIP_AXI4S_CFG_C.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] _dest_increment         = '0;
   protected logic   [VIP_AXI4S_CFG_C.VIP_AXI4S_TDATA_WIDTH_P-1 : 0] _counter                = '0;
   protected int                                                     _nr_of_bursts           = 1;
   protected logic   [VIP_AXI4S_CFG_C.VIP_AXI4S_TDATA_WIDTH_P-1 : 0] _custom_data  [$];
@@ -56,6 +56,11 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
 
   function void set_log_denominator(int log_denominator);
     _log_denominator = log_denominator;
+  endfunction
+
+
+  function void set_id_type(vip_axi4s_tid_type_t axi4s_tid_type);
+    _cfg.axi4s_tid_type = axi4s_tid_type;
   endfunction
 
 
@@ -89,11 +94,6 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
 
   function void set_enable_tdest_increment(bool_t enable_tdest_increment);
     _enable_tdest_increment = enable_tdest_increment;
-  endfunction
-
-
-  function void set_dest_increment(int dest_increment);
-    _dest_increment = dest_increment;
   endfunction
 
 
@@ -164,6 +164,13 @@ class vip_axi4s_base_seq extends uvm_sequence #(vip_axi4s_item #(VIP_AXI4S_CFG_C
 
       _counter += req.burst_length;
 
+      if (_cfg.axi4s_tid_type == VIP_AXI4S_TID_COUNTER_E) begin
+        _cfg.counter_id++;
+        if (_cfg.counter_id == 2**CFG_P.VIP_AXI4S_TID_WIDTH_P) begin
+          _cfg.counter_id = 0;
+        end
+      end
+
       if (_enable_tdest_increment) begin
         if (_tdest_increment == '0) begin
           set_tdest(_tdest + req.burst_length*VIP_AXI4S_CFG_C.VIP_AXI4S_TSTRB_WIDTH_P);
@@ -179,9 +186,10 @@ endclass
 // -----------------------------------------------------------------------------
 // Blank sequence
 // -----------------------------------------------------------------------------
-class vip_axi4s_seq extends vip_axi4s_base_seq;
+class vip_axi4s_seq #(vip_axi4s_cfg_t CFG_P = '{default: '0})
+  extends vip_axi4s_base_seq #(CFG_P);
 
-  `uvm_object_utils(vip_axi4s_seq)
+  `uvm_object_param_utils(vip_axi4s_seq #(CFG_P))
 
   function new(string name = "vip_axi4s_seq");
     super.new(name);

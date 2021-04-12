@@ -169,8 +169,9 @@ class vip_axi4s_driver #(
 
       if (beat_counter == burst_length) begin
         if (cfg.tvalid_delay_enabled) begin
-          vif.tvalid <= '0;
+          disable fork;
         end
+        vif.tvalid <= '0;
       end
     end
   endtask

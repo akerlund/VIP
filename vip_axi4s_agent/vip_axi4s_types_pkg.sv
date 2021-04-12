@@ -40,6 +40,11 @@ package vip_axi4s_types_pkg;
   } vip_axi4s_cfg_t;
 
   typedef enum {
+    VIP_AXI4S_TID_COUNTER_E,
+    VIP_AXI4S_TID_RANDOM_E
+  } vip_axi4s_tid_type_t;
+
+  typedef enum {
     VIP_AXI4S_TDATA_COUNTER_E,
     VIP_AXI4S_TDATA_RANDOM_E,
     VIP_AXI4S_TDATA_CUSTOM_E

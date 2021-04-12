@@ -63,7 +63,7 @@ class vip_axi4s_item #(
   endfunction
 
   function void set_counter_start(logic [CFG_P.VIP_AXI4S_TDATA_WIDTH_P-1 : 0] start);
-    cfg.counter_start = start;
+    cfg.counter_data = start;
   endfunction
 
   function void set_custom_data(logic [CFG_P.VIP_AXI4S_TDATA_WIDTH_P-1 : 0] data [$]);
@@ -75,6 +75,8 @@ class vip_axi4s_item #(
       if (custom_data.size() == 0) begin
         `uvm_fatal(get_name(), "Custom data has size 0")
       end
+      cfg.min_burst_length = custom_data.size();
+      cfg.max_burst_length = custom_data.size();
     end
   endfunction
 
@@ -92,7 +94,7 @@ class vip_axi4s_item #(
   constraint con_tdata_val {
     if (cfg.axi4s_tdata_type == VIP_AXI4S_TDATA_COUNTER_E) {
       foreach (tdata[i]) {
-        tdata[i] == cfg.counter_start + i;
+        tdata[i] == cfg.counter_data + i;
       }
     } else if (cfg.axi4s_tdata_type == VIP_AXI4S_TDATA_CUSTOM_E) {
       foreach (tdata[i]) {
@@ -114,14 +116,17 @@ class vip_axi4s_item #(
   }
 
   constraint con_tid {
-    tid >= cfg.min_tid;
-    tid <= cfg.max_tid;
+    if (cfg.axi4s_tid_type == VIP_AXI4S_TID_COUNTER_E) {
+      tid == cfg.counter_id;
+    } else {
+      tid >= cfg.min_tid;
+      tid <= cfg.max_tid;
+    }
   }
 
   constraint con_tdest {
     tdest >= cfg.min_tdest;
     tdest <= cfg.max_tdest;
   }
-
 
 endclass

@@ -23,8 +23,10 @@
 class vip_axi4s_item_config extends uvm_object;
 
   vip_axi4s_tdata_type_t axi4s_tdata_type = VIP_AXI4S_TDATA_COUNTER_E;
+  vip_axi4s_tid_type_t   axi4s_tid_type   = VIP_AXI4S_TID_COUNTER_E;
   vip_axi4s_tstrb_t      axi4s_tstrb      = VIP_AXI4S_TSTRB_ALL_E;
-  longint                counter_start    = 0;
+  longint                counter_data     = 0;
+  longint                counter_id       = 0;
 
   int min_tid          = 0;
   int max_tid          = 0;
@@ -35,8 +37,10 @@ class vip_axi4s_item_config extends uvm_object;
 
   `uvm_object_utils_begin(vip_axi4s_item_config);
     `uvm_field_enum(vip_axi4s_tdata_type_t, axi4s_tdata_type, UVM_ALL_ON)
+    `uvm_field_enum(vip_axi4s_tid_type_t,   axi4s_tid_type,   UVM_ALL_ON)
     `uvm_field_enum(vip_axi4s_tstrb_t,      axi4s_tstrb,      UVM_ALL_ON)
-    `uvm_field_int(counter_start,                             UVM_ALL_ON | UVM_DEC)
+    `uvm_field_int(counter_data,                              UVM_ALL_ON | UVM_DEC)
+    `uvm_field_int(counter_id,                                UVM_ALL_ON | UVM_DEC)
     `uvm_field_int(min_tid,                                   UVM_ALL_ON | UVM_DEC)
     `uvm_field_int(max_tid,                                   UVM_ALL_ON | UVM_DEC)
     `uvm_field_int(min_tdest,                                 UVM_ALL_ON | UVM_DEC)
