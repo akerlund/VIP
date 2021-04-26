@@ -1,7 +1,22 @@
 puts "INFO \[flow\] Vivado running in:"
 puts "[pwd]"
 
-file mkdir "reports"
+
+# ------------------------------------------------------------------------------
+# Parameters from run.sh
+# ------------------------------------------------------------------------------
+
+set_param general.maxThreads _THREADS
+set fpga_part  _FPGA_PART
+set rtl_top    _RTL_TOP
+set uvm_top    _UVM_TOP
+set rpt_dir    _RPT_DIR
+set parameters {_PARAMETERS}
+set mode       _MODE
+set run_mode   _RUN_TYPE
+set defines    _DEFINES
+
+file mkdir $rpt_dir
 
 # ------------------------------------------------------------------------------
 # Loading all files that were created in "scripts/vivado/run.sh"
@@ -94,7 +109,8 @@ puts "\n------------------------------------------------------------------------
 puts "INFO \[flow\] synth_design"
 puts "--------------------------------------------------------------------------------\n"
 
-synth_design -top $rtl_top -part 7z020clg484-1 -mode $mode
+read_xdc -mode out_of_context timing_constraints.xdc
+synth_design -top $rtl_top -part $fpga_part -mode $mode -verilog_define $defines
 
 write_checkpoint      -force $rpt_dir/post_synth.dcp
 report_timing_summary -file  $rpt_dir/post_synth_timing_summary.rpt

@@ -21,10 +21,8 @@
 ##
 ################################################################################
 
-set -e
-
 # ------------------------------------------------------------------------------
-# Check input parameters
+# Input parameters
 # ------------------------------------------------------------------------------
 
 if [ "$#" -lt 5 ]; then
@@ -35,64 +33,82 @@ else
   rundir=$3
   viv_run=$4
   viv_ooc=$5
+  usecase=$6
 fi
 
-# ------------------------------------------------------------------------------
-# Source module file list and create the rundir
-# ------------------------------------------------------------------------------
-
+echo "INFO [run_tools] make_root = $make_root"
 echo "INFO [run_tools] Sourcing files"
 source $file_list
 
-echo "INFO [run_tools] Creating run directory"
-the_time=$(date +'%d_%m_%Y_%H_%M_%S')
-viv_dir=$rundir/vivado
+# ------------------------------------------------------------------------------
+# FPGA parameters
+# ------------------------------------------------------------------------------
 
+# Default FPGA part
+if [ -z "${FPGA_PART+_null}" ]; then
+  echo "WARNING [run_tools] Using default FPGA part"
+  FPGA_PART="7z020clg484-1"
+fi
+
+# Default max threads
+if [ -z ${VIV_THREADS+_null} ]; then
+  echo "WARNING [run_tools] Using default threads (8)"
+  VIV_THREADS=8
+fi
+
+# Default clock period
+if [ -z ${FCLK_T+_null} ]; then
+  echo "WARNING [run_tools] Using default clock period (8.0)"
+  FCLK_T="8.0"
+  FWAVE="0 4.0"
+fi
+
+# Rundir
+viv_dir=$rundir/vivado
 if [[ ! -d "$viv_dir" ]]; then
   mkdir -p $viv_dir
 fi
 
+DEFINES=__NOTHING__
+if [ ! -z "$usecase" ]; then
+  DEFINES=${usecase}
+fi
+
 # ------------------------------------------------------------------------------
-# Writing the file lists and prepending variables to copied scripts
+# Setting parameters in the TCL files
 # ------------------------------------------------------------------------------
-cd $viv_dir
-echo "INFO [run_tools] Copying the script to the run directory"
+echo "INFO [run_tools] Setting parameters"
+cd   $viv_dir
 echo $rtl_dirs  > rtl_dirs.lst
 echo $rtl_files > rtl_files.lst
 echo $uvm_files > uvm_files.lst
 echo $uvm_dirs  > uvm_dirs.lst
 cp   $make_root/scripts/vivado/build_normal.tcl ./
 cp   $make_root/scripts/vivado/start_vivado_notrace.tcl ./
+cp   $make_root/scripts/vivado/timing_constraints.xdc ./
 
-
-echo "INFO [run_tools] Prepending the name of the top RTL module"
-sed -i '1s;^;set rtl_top '$rtl_top'\n;' build_normal.tcl
-
-echo "INFO [run_tools] Prepending the name of the top UVM module"
-sed -i '1s;^;set uvm_top '$uvm_top'\n;' build_normal.tcl
-
-echo "INFO [run_tools] Setting the report directory"
-rpt_dir=reports
-sed -i '1s;^;set rpt_dir '$rpt_dir'\n;' build_normal.tcl
-
-echo "INFO [run_tools] Overriding parameters"
 for p in ${parameters[@]}; do
   vivado_params+="$p "
 done
-sed -i "1s;^;set parameters {$vivado_params}\n;" build_normal.tcl
 
-# Out of Context?
+sed -i "s|_FCLK_T|${FCLK_T}|g"            timing_constraints.xdc
+sed -i "s|_FWAVE|${FWAVE}|g"              timing_constraints.xdc
+sed -i "s|_DEFINES|${DEFINES}|g"          build_normal.tcl
+sed -i "s|_THREADS|${VIV_THREADS}|g"      build_normal.tcl
+sed -i "s|_FPGA_PART|${FPGA_PART}|g"      build_normal.tcl
+sed -i "s|_RTL_TOP|${rtl_top}|g"          build_normal.tcl
+sed -i "s|_UVM_TOP|${uvm_top}|g"          build_normal.tcl
+sed -i "s|_RPT_DIR|reports|g"             build_normal.tcl
+sed -i "s|_PARAMETERS|${vivado_params}|g" build_normal.tcl
 if [ $viv_ooc -ge 1 ]; then
-  sed -i '1s;^;set mode out_of_context\n;' build_normal.tcl
+  sed -i "s|_MODE|out_of_context|g"       build_normal.tcl
 else
-  sed -i '1s;^;set mode default\n;' build_normal.tcl
+  sed -i "s|_MODE|default|g"              build_normal.tcl
 fi
-
-# Route and make bitstream?
-if [ "$viv_run" -ge 1 ]; then
-  sed -i "1s;^;set run_mode 1\n;" build_normal.tcl
+if [ $viv_run -ge 1 ]; then
+  sed -i "s|_RUN_TYPE|1|g"                build_normal.tcl
 else
-  sed -i "1s;^;set run_mode 0\n;" build_normal.tcl
+  sed -i "s|_RUN_TYPE|0|g"                build_normal.tcl
 fi
 
 # Save the start time
@@ -102,6 +118,7 @@ echo -e "\n---------------------------------------------------------------------
 echo -e "INFO [run_tools] Starting Vivado"
 echo -e "--------------------------------------------------------------------------------\n"
 
+export LC_ALL="en_US.UTF-8"
 vivado -source start_vivado_notrace.tcl -mode batch
 
 # Print utilization report if successful
@@ -121,15 +138,16 @@ else
     echo -e "INFO [run_tools] Vivado Log"
     echo -e "--------------------------------------------------------------------------------\n"
 
-    grep ^"WARNING:"           $viv_dir/vivado.log
-    grep ^"CRITICAL WARNING:"  $viv_dir/vivado.log
-    grep ^"ERROR:"             $viv_dir/vivado.log
+    grep ^"WARNING:"           $viv_dir/vivado.log || echo "No warnings"
+    grep ^"CRITICAL WARNING:"  $viv_dir/vivado.log || echo "INFO [run_tools] No critical warnings"
+    grep ^"ERROR:"             $viv_dir/vivado.log || echo "INFO [run_tools] No errors"
     echo ""
-    grep ^"Synthesis finished" $viv_dir/vivado.log
- fi
+    grep ^"Synthesis finished" $viv_dir/vivado.log || echo "ERROR [run_tools] Synthesis did not finish"
+  fi
 fi
 
 # Print the runtime
 end=`date +%s`
 runtime=$((end-start))
 echo -e "INFO [run_tools] Execution time: $(($runtime/3600))h $((($runtime/60)%60 ))m $(($runtime%60))s\n"
+exit $status
