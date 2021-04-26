@@ -28,23 +28,23 @@ class vip_axi4s_base_seq #(vip_axi4s_cfg_t CFG_P = '{default: '0})
 
   `uvm_object_param_utils(vip_axi4s_base_seq #(CFG_P))
 
-  typedef logic [VIP_AXI4S_CFG_C.VIP_AXI4S_TDATA_WIDTH_P-1 : 0] custom_data_t [$];
+  typedef logic [CFG_P.VIP_AXI4S_TDATA_WIDTH_P-1 : 0] custom_data_t [$];
 
-  protected bool_t                                                  _verbose                = TRUE;
-  protected int                                                     _log_denominator        = 100;
-  protected vip_axi4s_item_config                                   _cfg;
-  protected logic   [VIP_AXI4S_CFG_C.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] _tdest                  = '0;
-  protected bool_t                                                  _enable_tdest_increment = TRUE;
-  protected logic   [VIP_AXI4S_CFG_C.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] _tdest_increment        = '0;
-  protected logic   [VIP_AXI4S_CFG_C.VIP_AXI4S_TDATA_WIDTH_P-1 : 0] _counter                = '0;
-  protected int                                                     _nr_of_bursts           = 1;
-  protected logic   [VIP_AXI4S_CFG_C.VIP_AXI4S_TDATA_WIDTH_P-1 : 0] _custom_data  [$];
+  protected bool_t                                        _verbose                = TRUE;
+  protected int                                           _log_denominator        = 100;
+  protected vip_axi4s_item_config                         _cfg;
+  protected logic   [CFG_P.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] _tdest                  = '0;
+  protected bool_t                                        _enable_tdest_increment = TRUE;
+  protected logic   [CFG_P.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] _tdest_increment        = '0;
+  protected logic   [CFG_P.VIP_AXI4S_TDATA_WIDTH_P-1 : 0] _counter                = '0;
+  protected int                                           _nr_of_bursts           = 1;
+  protected logic   [CFG_P.VIP_AXI4S_TDATA_WIDTH_P-1 : 0] _custom_data  [$];
 
   function new(string name = "vip_axi4s_base_seq");
     super.new(name);
     _cfg = new();
-    _cfg.max_tid          = 2**VIP_AXI4S_CFG_C.VIP_AXI4S_TID_WIDTH_P-1;
-    _cfg.max_tdest        = 2**VIP_AXI4S_CFG_C.VIP_AXI4S_TDEST_WIDTH_P-1;
+    _cfg.max_tid          = 2**CFG_P.VIP_AXI4S_TID_WIDTH_P-1;
+    _cfg.max_tdest        = 2**CFG_P.VIP_AXI4S_TDEST_WIDTH_P-1;
     _cfg.max_burst_length = 256;
   endfunction
 
@@ -97,13 +97,13 @@ class vip_axi4s_base_seq #(vip_axi4s_cfg_t CFG_P = '{default: '0})
   endfunction
 
 
-  function void set_tid(logic [VIP_AXI4S_CFG_C.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] tid);
+  function void set_tid(logic [CFG_P.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] tid);
     _cfg.min_tdest = tid;
     _cfg.max_tdest = tid;
   endfunction
 
 
-  function void set_tdest(logic [VIP_AXI4S_CFG_C.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] tdest);
+  function void set_tdest(logic [CFG_P.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] tdest);
     _tdest         = tdest;
     _cfg.min_tdest = tdest;
     _cfg.max_tdest = tdest;
@@ -173,7 +173,7 @@ class vip_axi4s_base_seq #(vip_axi4s_cfg_t CFG_P = '{default: '0})
 
       if (_enable_tdest_increment) begin
         if (_tdest_increment == '0) begin
-          set_tdest(_tdest + req.burst_length*VIP_AXI4S_CFG_C.VIP_AXI4S_TSTRB_WIDTH_P);
+          set_tdest(_tdest + req.burst_length*CFG_P.VIP_AXI4S_TSTRB_WIDTH_P);
         end else begin
           set_tdest(_tdest + _tdest_increment);
         end
