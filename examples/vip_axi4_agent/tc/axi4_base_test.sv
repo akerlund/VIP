@@ -161,6 +161,12 @@ class axi4_base_test extends uvm_test;
   endtask
 
 
+  function void report_phase(uvm_phase phase);
+    super.report_phase(phase);
+    report_server0.test_report();
+  endfunction
+
+
   task clk_delay(int delay);
     #(delay*clk_rst_config0.clock_period);
   endtask

@@ -498,4 +498,23 @@ class report_server extends uvm_default_report_server;
 
   endfunction
 
+
+  function void test_report();
+
+    string _testname;
+    int    _errors;
+
+    if (!$value$plusargs("UVM_TESTNAME=%s", _testname)) begin
+      _testname = "tc_unknown";
+    end
+
+    _errors = get_severity_count(UVM_ERROR);
+
+    if (_errors) begin
+      `uvm_error(get_name(), $sformatf("Test (%s) FAIL: (%0d) errors", _testname, _errors))
+    end else begin
+      `uvm_info(get_name(), $sformatf("Test (%s) PASS", _testname), UVM_LOW)
+    end
+  endfunction
+
 endclass
