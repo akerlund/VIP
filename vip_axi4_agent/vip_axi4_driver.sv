@@ -725,6 +725,11 @@ class vip_axi4_driver #(
     int write_counter      = 0;
     wr_req = new();
 
+    if (_ev_monitor_wdata == null) begin
+      // If not configured in build phase
+      `uvm_fatal(get_name(), $sformatf("Event object is not created"))
+    end
+
     forever begin
 
       _ev_monitor_wdata.wait_on();

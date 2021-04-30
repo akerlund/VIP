@@ -38,7 +38,6 @@ class vip_axi4_base_seq #(vip_axi4_cfg_t CFG_P = '{default: '0})
   protected logic [CFG_P.VIP_AXI4_ADDR_WIDTH_P-1 : 0] _addr                  = '0;
   protected bool_t                                    _enable_addr_increment = TRUE;
   protected logic [CFG_P.VIP_AXI4_ADDR_WIDTH_P-1 : 0] _addr_increment        = '0;
-  protected int                                       _addr_boundary         = VIP_AXI4_4K_ADDRESS_BOUNDARY_C;
   protected logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] _counter               = '0;
   protected int unsigned                              _nr_of_requests        = 0;
   protected bool_t                                    _combine_requests      = FALSE;
@@ -147,7 +146,7 @@ class vip_axi4_base_seq #(vip_axi4_cfg_t CFG_P = '{default: '0})
   endfunction
 
 
-  function void set_addr_boundary(int addr_boundary);
+  function void set_addr_boundary(longint addr_boundary);
     _cfg.addr_boundary = addr_boundary;
   endfunction
 
@@ -224,7 +223,10 @@ class vip_axi4_base_seq #(vip_axi4_cfg_t CFG_P = '{default: '0})
       end
       req.set_config(_cfg);
       req.set_counter_start(_counter);
-      req.randomize();
+      if (!req.randomize()) begin
+        `uvm_error(get_name(), $sformatf("randomize() failed"))
+        req.print_config();
+      end
       _combined_request.push_back(req);
       delete_custom_data(req.awlen + 1);
       if (_cfg.axi4_data_type == VIP_AXI4_DATA_CUSTOM_E && !_custom_data.size()) begin
@@ -256,6 +258,7 @@ class vip_axi4_base_seq #(vip_axi4_cfg_t CFG_P = '{default: '0})
 
       if (!req.randomize()) begin
         `uvm_error(get_name(), $sformatf("randomize() failed"))
+        req.print_config();
       end
 
       if (_combine_requests == FALSE) begin
