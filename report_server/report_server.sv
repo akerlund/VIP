@@ -59,7 +59,7 @@ class report_server extends uvm_default_report_server;
 
   uvm_cmdline_processor clp;
 
-  string clp_uvm_args[$];
+  string _plusarg;
 
   // identation size = 11(%11s) + 1 space + 1("@") + 7(%7t) + 2("ns") +
   //                   2 spaces (%2s) + 2(extra indentation) = 26
@@ -147,24 +147,28 @@ class report_server extends uvm_default_report_server;
 
     clp = uvm_cmdline_processor::get_inst();
 
-    if ($test$plusargs("UVM_REPORT_NOCOLOR", clp_uvm_args)) begin
+    if ($test$plusargs("UVM_REPORT_NOCOLOR")) begin
       uvm_report_nocolor = 1;
-      $display("NO COLOR");
     end else begin
       uvm_report_nocolor = 0;
-      $display("COLOR");
     end
 
-    if ($test$plusargs("+UVM_REPORT_NOMSGWRAP", clp_uvm_args)) begin
-      uvm_report_nomsgwrap = 1;
+    if ($value$plusargs("UVM_REPORT_NOMSGWRAP=%s", _plusarg)) begin
+      if (_plusarg == "0") begin
+        uvm_report_nomsgwrap = 0;
+      end else begin
+        uvm_report_nomsgwrap = 1;
+      end
     end else begin
       uvm_report_nomsgwrap = 0;
     end
 
-    if ($test$plusargs("+UVM_REPORT_TRACEBACK=NONE", clp_uvm_args)) begin
-      uvm_report_traceback = UVM_REPORT_TRACEBACK_NONE;
-    end else if ($test$plusargs("+UVM_REPORT_TRACEBACK=ALL", clp_uvm_args)) begin
-      uvm_report_traceback = UVM_REPORT_TRACEBACK_ALL;
+    if ($value$plusargs("UVM_REPORT_TRACEBACK=%s", _plusarg)) begin
+      if (_plusarg == "NONE") begin
+        uvm_report_traceback = UVM_REPORT_TRACEBACK_NONE;
+      end else begin
+        uvm_report_traceback = UVM_REPORT_TRACEBACK_ALL;
+      end
     end else begin
       uvm_report_traceback = UVM_REPORT_TRACEBACK_HIGHPLUS;
     end
