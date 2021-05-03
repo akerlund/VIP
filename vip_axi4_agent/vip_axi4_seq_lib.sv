@@ -146,6 +146,11 @@ class vip_axi4_base_seq #(vip_axi4_cfg_t CFG_P = '{default: '0})
   endfunction
 
 
+  function int get_counter_id();
+    get_counter_id = _cfg.counter_id;
+  endfunction
+
+
   function void set_addr_boundary(longint addr_boundary);
     _cfg.addr_boundary = addr_boundary;
   endfunction
@@ -241,7 +246,7 @@ class vip_axi4_base_seq #(vip_axi4_cfg_t CFG_P = '{default: '0})
 
       if (_verbose == TRUE && _combine_requests == FALSE &&
           (i % _log_denominator == 0 || i == _nr_of_requests-1)) begin
-        if (!_cfg.axi4_data_type == VIP_AXI4_DATA_CUSTOM_E) begin
+        if (_cfg.axi4_data_type != VIP_AXI4_DATA_CUSTOM_E) begin
           `uvm_info(get_name(), $sformatf("%s (%0d/%0d)", _log_access_type, i+1, _nr_of_requests), UVM_LOW)
         end else begin
           `uvm_info(get_name(), $sformatf("%s (%0d)", _log_access_type, i+1), UVM_LOW)
@@ -321,16 +326,18 @@ class vip_axi4_base_seq #(vip_axi4_cfg_t CFG_P = '{default: '0})
 
 
   protected function void increase_address();
+    longint _new_addr;
     if (_enable_addr_increment == TRUE) begin
       if (_addr_increment == '0) begin
         if (_cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) begin
-          set_addr(_addr + (req.awlen + 1)*CFG_P.VIP_AXI4_STRB_WIDTH_P);
+          _new_addr = _addr + (req.awlen + 1)*CFG_P.VIP_AXI4_STRB_WIDTH_P;
         end else begin
-          set_addr(_addr + (req.arlen + 1)*CFG_P.VIP_AXI4_STRB_WIDTH_P);
+          _new_addr = _addr + (req.arlen + 1)*CFG_P.VIP_AXI4_STRB_WIDTH_P;
         end
       end else begin
-        set_addr(_addr + _addr_increment);
+        _new_addr = _addr + _addr_increment;
       end
+      set_addr(_new_addr);
     end
   endfunction
 
