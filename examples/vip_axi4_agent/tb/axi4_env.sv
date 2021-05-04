@@ -38,8 +38,8 @@ class axi4_env extends uvm_env;
   axi4_scoreboard        scoreboard0;
   axi4_virtual_sequencer virtual_sequencer;
 
-  register_model   reg_model;
-  vip_axi4_adapter vip_axi4_adapter0;
+  register_model                    reg_model;
+  vip_axi4_adapter #(VIP_REG_CFG_C) vip_axi4_adapter0;
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
@@ -60,7 +60,7 @@ class axi4_env extends uvm_env;
     reg_model.build();
     reg_model.reset();
     uvm_config_db #(register_model)::set(null, "", "reg_model", reg_model);
-    vip_axi4_adapter0 = vip_axi4_adapter::type_id::create("vip_axi4_adapter0",, get_full_name());
+    vip_axi4_adapter0 = vip_axi4_adapter #(VIP_REG_CFG_C)::type_id::create("vip_axi4_adapter0",, get_full_name());
 
     // Create Agents
     clk_rst_agent0 = clk_rst_agent::type_id::create("clk_rst_agent0", this);

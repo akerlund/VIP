@@ -188,6 +188,17 @@ class tc_axi4_demonstration extends axi4_base_test;
       `uvm_error(get_name(), $sformatf("Register mismatch: wr(%0d) != rd(%0d)", cr_configuration, value))
     end
 
+    // Write and read
+    cr_configuration = 2**VIP_AXI4_CFG_C.VIP_AXI4_DATA_WIDTH_P-1;
+    reg_model.axi4.configuration.write(uvm_status, cr_configuration);
+    `uvm_info(get_name(), $sformatf("[REGISTER] Wrote (%0d)", cr_configuration), UVM_LOW)
+    reg_model.axi4.status.read(uvm_status, value);
+    `uvm_info(get_name(), $sformatf("[REGISTER] Read  (%0d)", value), UVM_LOW)
+
+    if (cr_configuration !== value) begin
+      `uvm_error(get_name(), $sformatf("Register mismatch: wr(%0d) != rd(%0d)", cr_configuration, value))
+    end
+
     // -------------------------------------------------------------------------
     // Random testing
     // -------------------------------------------------------------------------

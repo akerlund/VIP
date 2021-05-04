@@ -20,9 +20,16 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-class vip_axi4_adapter extends uvm_reg_adapter;
+class vip_axi4_adapter #(
+  vip_axi4_cfg_t CFG_P = '{
+    VIP_AXI4_ID_WIDTH_P   : 1,
+    VIP_AXI4_ADDR_WIDTH_P : 1,
+    VIP_AXI4_DATA_WIDTH_P : 8,
+    VIP_AXI4_STRB_WIDTH_P : 1,
+    VIP_AXI4_USER_WIDTH_P : 0}
+  ) extends uvm_reg_adapter;
 
-  `uvm_object_utils(vip_axi4_adapter)
+  `uvm_object_param_utils(vip_axi4_adapter #(CFG_P))
 
   function new (string name = "vip_axi4_adapter");
     super.new(name);
@@ -30,11 +37,11 @@ class vip_axi4_adapter extends uvm_reg_adapter;
 
   function uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw);
 
-    vip_axi4_item #(VIP_REG_CFG_C) reg_item;
+    vip_axi4_item #(CFG_P) reg_item;
 
     if (rw.kind == UVM_WRITE) begin
 
-      reg_item                 = vip_axi4_item #(VIP_REG_CFG_C)::type_id::create("reg_item");
+      reg_item                 = vip_axi4_item #(CFG_P)::type_id::create("reg_item");
       reg_item.cfg             = new();
       reg_item.cfg.axi4_access = VIP_AXI4_WR_REQUEST_E;
 
@@ -54,9 +61,9 @@ class vip_axi4_adapter extends uvm_reg_adapter;
     end
     else begin
 
-      reg_item = vip_axi4_item #(VIP_REG_CFG_C)::type_id::create("reg_item");
+      reg_item = vip_axi4_item #(CFG_P)::type_id::create("reg_item");
 
-      reg_item                     = vip_axi4_item #(VIP_REG_CFG_C)::type_id::create("reg_item");
+      reg_item                     = vip_axi4_item #(CFG_P)::type_id::create("reg_item");
       reg_item.cfg                 = new();
       reg_item.cfg.axi4_access     = VIP_AXI4_RD_REQUEST_E;
       reg_item.cfg.get_rd_response = TRUE;
@@ -77,7 +84,7 @@ class vip_axi4_adapter extends uvm_reg_adapter;
 
   function void bus2reg(uvm_sequence_item bus_item, ref uvm_reg_bus_op rw);
 
-    vip_axi4_item #(VIP_REG_CFG_C) reg_item;
+    vip_axi4_item #(CFG_P) reg_item;
 
     assert ($cast(reg_item, bus_item)) else
       `uvm_fatal(get_name(), "Cannot cast to vip_axi4_item")
