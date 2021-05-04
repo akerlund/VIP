@@ -21,13 +21,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-`ifndef VIP_DSP_PKG
-`define VIP_DSP_PKG
+`ifndef VIP_IIR_PKG
+`define VIP_IIR_PKG
 
-import vip_math_pkg::*;
-import iir_biquad_types_pkg::*;
+package vip_iir_pkg;
 
-package vip_dsp_pkg;
+  import vip_math_pkg::*;
+  import iir_biquad_types_pkg::*;
 
   typedef struct {
     real w0;
@@ -45,7 +45,7 @@ package vip_dsp_pkg;
 
     biquad_coefficients_t coef;
 
-    coef.w0   = 2 * vip_math_pkg::vip_pi * f0 / fs;
+    coef.w0   = 2 * PI_C * f0 / fs;
     coef.alfa = $sin(coef.w0) / (2 * q);
 
     case (bq_type)
