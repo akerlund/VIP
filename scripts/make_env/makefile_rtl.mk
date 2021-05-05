@@ -11,6 +11,7 @@ UVM_TR_RECORD?=UVM_HIGH
 UVM_VERBOSITY?=LOW
 VIV_OOC?=1
 GUI?=0
+QUIET=0
 
 # Define Vivado options
 VIV_BUILD=0
@@ -31,6 +32,7 @@ RUN_ZYNQ=$(MAKE_ROOT)/scripts/vivado/run_zynq.sh
 RUN_XSIM=$(MAKE_ROOT)/scripts/vivado/xsim.sh
 RUN_VERILATOR=$(MAKE_ROOT)/scripts/verilator/run.sh
 RUN_PYRG=$(MAKE_ROOT)/../PYRG/pyrg.py
+SUM_REPORT=$(MAKE_ROOT)/scripts/vivado/summary_report.sh
 
 export
 
@@ -102,7 +104,16 @@ list:
 	@for tc in $(TC_LIST); do echo " $$tc"; done
 
 $(TC_LIST): tc_%: ${RUN_DIR}
-	@$(RUN_XSIM) $(RUN_DIR) $(@) $(UVM_VERBOSITY) $(GUI)
+	@$(RUN_XSIM) $(RUN_DIR) $(@) $(UVM_VERBOSITY) $(GUI) $(QUIET)
+
+print_header:
+	@echo "Testcase                        Result | Warnings | Errors | Failures | Time"
+	@echo "---------------------------------------+----------+--------+----------+---------"
+
+
+run_all: QUIET = 1
+run_all: print_header $(TC_LIST)
+	@$(SUM_REPORT) $(RUN_DIR)        # Create summary report from last line in each tc log
 
 clean:
 	@echo "Removing ${RUN_DIR}"
