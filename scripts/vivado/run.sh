@@ -60,7 +60,6 @@ fi
 if [ -z ${FCLK_T+_null} ]; then
   echo "WARNING [run_tools] Using default clock period (8.0)"
   FCLK_T="8.0"
-  FWAVE="0 4.0"
 fi
 
 # Rundir
@@ -133,18 +132,12 @@ else
     echo -e "--------------------------------------------------------------------------------\n"
     echo -e ""
     sed -n '/^+-/,/^* Warning/p;/^* Warning/q' $viv_dir/reports/post_synth_util.rpt
-
-    echo -e "\n--------------------------------------------------------------------------------"
-    echo -e "INFO [run_tools] Vivado Log"
-    echo -e "--------------------------------------------------------------------------------\n"
-
-    grep ^"WARNING:"           $viv_dir/vivado.log || echo "No warnings"
-    grep ^"CRITICAL WARNING:"  $viv_dir/vivado.log || echo "INFO [run_tools] No critical warnings"
-    grep ^"ERROR:"             $viv_dir/vivado.log || echo "INFO [run_tools] No errors"
-    echo ""
     grep ^"Synthesis finished" $viv_dir/vivado.log || echo "ERROR [run_tools] Synthesis did not finish"
+    python3 $make_root/scripts/vivado/post_run.py -d $viv_dir $viv_waiver
+    status=$?
   fi
 fi
+
 
 # Print the runtime
 end=`date +%s`

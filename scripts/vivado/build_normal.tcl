@@ -111,6 +111,7 @@ puts "--------------------------------------------------------------------------
 
 read_xdc -mode out_of_context timing_constraints.xdc
 synth_design -top $rtl_top -part $fpga_part -mode $mode -verilog_define $defines
+set_property HD.CLK_SRC BUFGCTRL_X0Y0 [get_ports clk]
 
 write_checkpoint      -force $rpt_dir/post_synth.dcp
 report_timing_summary -file  $rpt_dir/post_synth_timing_summary.rpt
