@@ -98,8 +98,8 @@ class vip_axi4s_base_seq #(vip_axi4s_cfg_t CFG_P = '{default: '0})
 
 
   function void set_tid(logic [CFG_P.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] tid);
-    _cfg.min_tdest = tid;
-    _cfg.max_tdest = tid;
+    _cfg.min_tid = tid;
+    _cfg.max_tid = tid;
   endfunction
 
 
@@ -122,20 +122,20 @@ class vip_axi4s_base_seq #(vip_axi4s_cfg_t CFG_P = '{default: '0})
 
 
   function void set_cfg_tid(int max_tid, int min_tid);
-    _cfg.max_tid = max_tid;
     _cfg.min_tid = min_tid;
+    _cfg.max_tid = max_tid;
   endfunction
 
 
   function void set_cfg_tdest(int max_tdest, int min_tdest);
-    _cfg.max_tdest = max_tdest;
     _cfg.min_tdest = min_tdest;
+    _cfg.max_tdest = max_tdest;
   endfunction
 
 
   function void set_cfg_burst_length(int max_burst_length, int min_burst_length);
-    _cfg.max_burst_length = max_burst_length;
     _cfg.min_burst_length = min_burst_length;
+    _cfg.max_burst_length = max_burst_length;
   endfunction
 
 
