@@ -41,6 +41,11 @@ class vip_axi4_base_seq #(vip_axi4_cfg_t CFG_P = '{default: '0})
   protected logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] _counter               = '0;
   protected int unsigned                              _nr_of_requests        = 0;
   protected bool_t                                    _combine_requests      = FALSE;
+  protected bool_t                                    _request_delay_enabled = FALSE;
+  protected int                                       _request_delay_min     = 0;
+  protected int                                       _request_delay_max     = 0;
+  protected realtime                                  _clock_period          = 0.0;
+
   protected logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] _custom_data  [$];
   protected vip_axi4_item #(CFG_P)                    _rd_responses [$];
   protected vip_axi4_item #(CFG_P)                    _rd_response;
@@ -214,6 +219,32 @@ class vip_axi4_base_seq #(vip_axi4_cfg_t CFG_P = '{default: '0})
   endfunction
 
 
+  function void set_request_delay_enabled(bool_t request_delay_enabled);
+    _request_delay_enabled = request_delay_enabled;
+  endfunction
+
+
+  function void set_request_delay_min(int min);
+    _request_delay_min = min;
+  endfunction
+
+
+  function void set_request_delay_max(int max);
+    _request_delay_max = max;
+  endfunction
+
+
+  function void set_clock_period(realtime clock_period);
+    _clock_period = clock_period;
+  endfunction
+
+
+  protected task clk_delay(int delay);
+    if (_clock_period == 0.0) begin `uvm_fatal(get_name(), "Clock period is undefined") end
+    #(delay*_clock_period);
+  endtask
+
+
   task body();
 
     vip_axi4_item #(CFG_P) _combined_request [$];
@@ -288,6 +319,10 @@ class vip_axi4_base_seq #(vip_axi4_cfg_t CFG_P = '{default: '0})
         if (!_custom_data.size()) begin
           break;
         end
+      end
+
+      if (_request_delay_enabled == TRUE) begin
+        clk_delay($urandom_range(_request_delay_max, _request_delay_min));
       end
     end
 
