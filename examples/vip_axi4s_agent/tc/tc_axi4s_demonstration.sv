@@ -40,6 +40,13 @@ class tc_axi4s_demonstration extends axi4s_base_test;
     super.run_phase(phase);
     phase.raise_objection(this);
 
+    vip_axi4s_seq0.set_burst_delay_enabled(TRUE);
+    vip_axi4s_seq0.set_burst_delay_min(32);
+    vip_axi4s_seq0.set_burst_delay_max(32);
+    vip_axi4s_seq0.set_clock_period(clk_rst_config0.clock_period);
+
+    vip_axi4s_seq0.set_nr_of_bursts(4);
+
     vip_axi4s_seq0.set_data_type(VIP_AXI4S_TDATA_COUNTER_E);
     vip_axi4s_seq0.set_burst_length(16);
     vip_axi4s_seq0.set_tstrb(VIP_AXI4S_TSTRB_ALL_E);

@@ -38,6 +38,10 @@ class vip_axi4s_base_seq #(vip_axi4s_cfg_t CFG_P = '{default: '0})
   protected logic   [CFG_P.VIP_AXI4S_TDEST_WIDTH_P-1 : 0] _tdest_increment        = '0;
   protected logic   [CFG_P.VIP_AXI4S_TDATA_WIDTH_P-1 : 0] _counter                = '0;
   protected int                                           _nr_of_bursts           = 1;
+  protected bool_t                                        _burst_delay_enabled    = FALSE;
+  protected int                                           _burst_delay_min        = 0;
+  protected int                                           _burst_delay_max        = 0;
+  protected realtime                                      _clock_period           = 0.0;
   protected logic   [CFG_P.VIP_AXI4S_TDATA_WIDTH_P-1 : 0] _custom_data  [$];
 
   function new(string name = "vip_axi4s_base_seq");
@@ -139,6 +143,32 @@ class vip_axi4s_base_seq #(vip_axi4s_cfg_t CFG_P = '{default: '0})
   endfunction
 
 
+  function void set_burst_delay_enabled(bool_t burst_delay_enabled);
+    _burst_delay_enabled = burst_delay_enabled;
+  endfunction
+
+
+  function void set_burst_delay_min(int min);
+    _burst_delay_min = min;
+  endfunction
+
+
+  function void set_burst_delay_max(int max);
+    _burst_delay_max = max;
+  endfunction
+
+
+  function void set_clock_period(realtime clock_period);
+    _clock_period = clock_period;
+  endfunction
+
+
+  protected task clk_delay(int delay);
+    if (_clock_period == 0.0) begin `uvm_fatal(get_name(), "Clock period is undefined") end
+    #(delay*_clock_period);
+  endtask
+
+
   task body();
 
     for (int i = 0; i < _nr_of_bursts; i++) begin
@@ -177,6 +207,10 @@ class vip_axi4s_base_seq #(vip_axi4s_cfg_t CFG_P = '{default: '0})
         end else begin
           set_tdest(_tdest + _tdest_increment);
         end
+      end
+
+      if (_burst_delay_enabled == TRUE) begin
+        clk_delay($urandom_range(_burst_delay_max, _burst_delay_min));
       end
 
     end
