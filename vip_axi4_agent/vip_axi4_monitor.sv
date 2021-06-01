@@ -152,6 +152,7 @@ class vip_axi4_monitor #(
 
     vip_axi4_item #(CFG_P) awaddr_item;
     vip_axi4_item #(CFG_P) wdata_item;
+    vip_axi4_item #(CFG_P) bresp_item;
     int beat_counter = 0;
 
     forever begin
@@ -181,7 +182,7 @@ class vip_axi4_monitor #(
         awaddr_item.wstrb = new[vif.awlen+1];
         awaddr_item.wuser = new[vif.awlen+1];
 
-        _awaddr_items.push_back(awaddr_item);
+        _awaddr_items.push_back(awaddr_item.clone());
         awaddr_port.write(awaddr_item);
 
         `uvm_info(get_name(), $sformatf("Collected Write Address Channel:\n%s", awaddr_item.sprint()), UVM_HIGH)
@@ -198,7 +199,6 @@ class vip_axi4_monitor #(
 
       if (vif.wlast === '1 && vif.wvalid === '1 && vif.wready === '1) begin
 
-        wdata_item = new();
         wdata_item = _awaddr_items.pop_front();
 
         if (wdata_item == null) begin
@@ -233,13 +233,12 @@ class vip_axi4_monitor #(
       // Write Response Channel
       // -----------------------------------------------------------------------
       if (vif.bvalid === '1 && vif.bready === '1) begin
-
-        wdata_item.bid   = vif.bid;
-        wdata_item.bresp = vif.bresp;
-        wdata_item.buser = vif.buser;
-
-        `uvm_info(get_name(), $sformatf("Collected Write Response Channel:\n%s", wdata_item.sprint()), UVM_HIGH)
-        bresp_port.write(wdata_item);
+        $cast(bresp_item, wdata_item.clone());
+        bresp_item.bid   = vif.bid;
+        bresp_item.bresp = vif.bresp;
+        bresp_item.buser = vif.buser;
+        `uvm_info(get_name(), $sformatf("Collected Write Response Channel:\n%s", bresp_item.sprint()), UVM_HIGH)
+        bresp_port.write(bresp_item);
       end
 
     end
@@ -280,7 +279,7 @@ class vip_axi4_monitor #(
         araddr_item.aruser   = vif.aruser;
 
         channel_id = int'(vif.arid);
-        _araddr_items[channel_id].push_back(araddr_item);
+        _araddr_items[channel_id].push_back(araddr_item.clone());
 
         araddr_port.write(araddr_item);
 
@@ -309,8 +308,6 @@ class vip_axi4_monitor #(
         _ruser_beats.push_back(vif.ruser);
 
         if (vif.rlast === '1) begin
-
-          rdata_item = new();
 
           if (cfg.monitor_merge_reads == TRUE) begin
 
