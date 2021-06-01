@@ -156,14 +156,14 @@ class vip_axi4_agent #(
   // ---------------------------------------------------------------------------
   function void memory_write(logic [CFG_P.VIP_AXI4_ADDR_WIDTH_P-1 : 0] addr,
                              logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] data[$]);
-    driver. memory_write(addr, data);
+    driver.memory_write(addr, data);
   endfunction
 
   // ---------------------------------------------------------------------------
   // This function returns data for an index in the memory array
   // ---------------------------------------------------------------------------
   function logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] memory_read_index(int index);
-    driver.memory_read_index(index);
+    return driver.memory_read_index(index);
   endfunction
 
 endclass

@@ -182,8 +182,9 @@ class vip_axi4_monitor #(
         awaddr_item.wstrb = new[vif.awlen+1];
         awaddr_item.wuser = new[vif.awlen+1];
 
-        _awaddr_items.push_back(awaddr_item.clone());
         awaddr_port.write(awaddr_item);
+        $cast(awaddr_item, awaddr_item.clone());
+        _awaddr_items.push_back(awaddr_item);
 
         `uvm_info(get_name(), $sformatf("Collected Write Address Channel:\n%s", awaddr_item.sprint()), UVM_HIGH)
       end
@@ -279,7 +280,8 @@ class vip_axi4_monitor #(
         araddr_item.aruser   = vif.aruser;
 
         channel_id = int'(vif.arid);
-        _araddr_items[channel_id].push_back(araddr_item.clone());
+        _araddr_items[channel_id].push_back(araddr_item);
+        $cast(araddr_item, araddr_item.clone());
 
         araddr_port.write(araddr_item);
 
