@@ -47,6 +47,7 @@ class vip_axi4_base_seq #(vip_axi4_cfg_t CFG_P = '{default: '0})
   protected realtime                                  _clock_period          = 0.0;
 
   protected logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] _custom_data  [$];
+  protected bool_t                                    _custom_len_max        = TRUE;
   protected vip_axi4_item #(CFG_P)                    _rd_responses [$];
   protected vip_axi4_item #(CFG_P)                    _rd_response;
 
@@ -113,6 +114,11 @@ class vip_axi4_base_seq #(vip_axi4_cfg_t CFG_P = '{default: '0})
 
   function void set_custom_data(custom_data_t custom_data);
     _custom_data = custom_data;
+  endfunction
+
+
+  function void set_custom_len_max(bool_t custom_len_max);
+    _custom_len_max = custom_len_max;
   endfunction
 
 
@@ -379,9 +385,17 @@ class vip_axi4_base_seq #(vip_axi4_cfg_t CFG_P = '{default: '0})
 
   protected function void set_awlen_for_custom_data();
     if (_custom_data.size() >= 255) begin
-      set_cfg_len(255, 0);
+      if (_custom_len_max == TRUE) begin
+        set_cfg_len(255, 255);
+      end else begin
+        set_cfg_len(255, 0);
+      end
     end else begin
-      set_cfg_len(_custom_data.size()-1, 0);
+      if (_custom_len_max == TRUE) begin
+        set_cfg_len(_custom_data.size()-1, _custom_data.size()-1);
+      end else begin
+        set_cfg_len(_custom_data.size()-1, 0);
+      end
     end
   endfunction
 
