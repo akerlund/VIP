@@ -22,6 +22,9 @@
 
 package vip_file_functions_pkg;
 
+  import uvm_pkg::*;
+  `include "uvm_macros.svh"
+
   // This function returns the path to this repository's root
   function string vip_get_git_root();
 
@@ -53,11 +56,10 @@ package vip_file_functions_pkg;
     file_buffer.delete();
 
     if (!mcd) begin
-      $display("vip_read_file_to_buffer()", $sformatf("File was NOT opened successfully: %s", file_name));
-      $stop();
+      `uvm_fatal("vip_read_file_to_buffer()", $sformatf("File was NOT opened successfully: %s", file_name))
     end
 
-    $display("vip_read_file_to_buffer()", $sformatf("Reading file: (%s)", file_name));
+    `uvm_info("vip_read_file_to_buffer()", $sformatf("Reading file: (%s)", file_name), UVM_LOW)
 
     while (!$feof(mcd)) begin
       void'($fscanf(mcd, "%s\n", line));
