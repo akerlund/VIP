@@ -35,6 +35,11 @@ class vip_axi4_config extends uvm_object;
   bool_t                  monitor_merge_reads = TRUE;
   bool_t                  bresp_enabled       = TRUE;
 
+  // Set this false if the Agent is used with UVM register models.
+  // The built in register tests does not pop the response queue, so they yield
+  // errors, i.e., "Response queue overflow".
+  bool_t                  drv_put_rsp_in_port = TRUE;
+
   // ---------------------------------------------------------------------------
   // Memory Config
   // ---------------------------------------------------------------------------

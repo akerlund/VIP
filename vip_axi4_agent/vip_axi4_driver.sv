@@ -600,7 +600,9 @@ class vip_axi4_driver #(
         received_responses++;
       end
 
-      seq_item_port.put(rsp);
+      if (cfg.drv_put_rsp_in_port == TRUE) begin
+        seq_item_port.put(rsp);
+      end
     end
   endtask
 
