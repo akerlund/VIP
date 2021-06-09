@@ -123,13 +123,13 @@ module vip_axi4_sva #(
         .bresp    ( bresp    ),
         .buser    ( buser    ),
         .bvalid   ( bvalid   ),
-        .bready   ( bready   ),
+        .bready   ( bready   )
       );
     end
 
     if (RD_SVA_P) begin
 
-      module vip_axi4_rd_sva #(
+      vip_axi4_rd_sva #(
         .CFG_P    ( CFG_P    )
       ) vip_axi4_rd_sva_i0 (
         // Clock and reset
@@ -158,7 +158,7 @@ module vip_axi4_sva #(
         .rlast    ( rlast    ),
         .ruser    ( ruser    ),
         .rvalid   ( rvalid   ),
-        .rready   ( rready   ),
+        .rready   ( rready   )
       );
     end
   endgenerate

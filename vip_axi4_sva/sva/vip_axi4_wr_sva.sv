@@ -76,7 +76,7 @@ module vip_axi4_wr_sva #(
     awvalid && (awburst == VIP_AXI4_BURST_INCR_C) && !($isunknown({awvalid, awburst, awaddr}))
     |-> (_awaddr_end[CFG_P.VIP_AXI4_ADDR_WIDTH_P-1 : 12] == awaddr[CFG_P.VIP_AXI4_ADDR_WIDTH_P-1 : 12]);
   endproperty
-  VIP_AXI4_AWADDR_BOUNDARY_PR: assert property (VIP_AXI4_AWADDR_BOUNDARY_PR) else
+  VIP_AXI4_AWADDR_BOUNDARY_ERROR: assert property (VIP_AXI4_AWADDR_BOUNDARY_PR) else
     $error("VIP_AXI4_AWADDR_BOUNDARY_PR: A burst must not cross a 4kB boundary. Spec: section A3.4.1.");
 
 
@@ -104,7 +104,7 @@ module vip_axi4_wr_sva #(
     awvalid && (awburst == VIP_AXI4_BURST_WRAP_C) && !($isunknown({awvalid, awburst, awaddr}))
     |-> ((awaddr[6 : 0] & _wr_mask_aligned) == awaddr[6 : 0]);
   endproperty
-  VIP_AXI4_AWADDR_WRAP_ALIGN_PR: assert property (VIP_AXI4_AWADDR_WRAP_ALIGN_PR) else
+  VIP_AXI4_AWADDR_WRAP_ALIGN_ERROR: assert property (VIP_AXI4_AWADDR_WRAP_ALIGN_PR) else
     $error("VIP_AXI4_AWADDR_WRAP_ALIGN_PR: For a wrapping burst, the start address must be aligned to the size of each transfer. Spec: section A3.4.1.");
 
 
@@ -112,7 +112,7 @@ module vip_axi4_wr_sva #(
     awvalid && !($isunknown({awvalid, awburst}))
     |-> (awburst != 2'b11);
   endproperty
-  VIP_AXI4_AWBURST_PR: assert property (VIP_AXI4_AWBURST_PR) else
+  VIP_AXI4_AWBURST_ERROR: assert property (VIP_AXI4_AWBURST_PR) else
     $error("VIP_AXI4_AWBURST_PR: When AWVALID is high, a value of 2'b11 on AWBURST is reserved. Spec: table A3-3.");
 
 
@@ -120,7 +120,7 @@ module vip_axi4_wr_sva #(
     awvalid && (awlen > 8'b00001111) && !($isunknown({awvalid, awlen, awlock}))
     |-> (awlock != 1'b1);
   endproperty
-  VIP_AXI4_AWLEN_LOCK_PR: assert property (VIP_AXI4_AWLEN_LOCK_PR) else
+  VIP_AXI4_AWLEN_LOCK_ERROR: assert property (VIP_AXI4_AWLEN_LOCK_PR) else
     $error("VIP_AXI4_AWLEN_LOCK_PR: Exclusive access transactions cannot have a length greater than 16 beats. Spec: section A7.2.4.");
 
 
@@ -128,7 +128,7 @@ module vip_axi4_wr_sva #(
     awvalid && (awlen > 8'b00001111) && !($isunknown({awvalid, awlen, awburst}))
     |-> (awburst != VIP_AXI4_BURST_FIXED_C);
   endproperty
-  VIP_AXI4_AWLEN_FIXED_PR: assert property (VIP_AXI4_AWLEN_FIXED_PR) else
+  VIP_AXI4_AWLEN_FIXED_ERROR: assert property (VIP_AXI4_AWLEN_FIXED_PR) else
     $error("VIP_AXI4_AWLEN_FIXED_PR: Transactions of burst type FIXED cannot have a length greater than 16 beats. Spec: section A3.4.1.");
 
 
@@ -139,7 +139,7 @@ module vip_axi4_wr_sva #(
         awlen == 8'b00000111 ||
         awlen == 8'b00001111);
   endproperty
-  VIP_AXI4_AWLEN_WRAP_PR: assert property (VIP_AXI4_AWLEN_WRAP_PR) else
+  VIP_AXI4_AWLEN_WRAP_ERROR: assert property (VIP_AXI4_AWLEN_WRAP_PR) else
     $error("VIP_AXI4_AWLEN_WRAP_PR: For a wrapping burst, the length of the burst must be 2, 4, 8 or 16 transfers. Spec: section A3.4.1.");
 
 
@@ -152,7 +152,7 @@ module vip_axi4_wr_sva #(
     awvalid && !($isunknown({awvalid, awsize}))
     |-> (_awsize <= CFG_P.VIP_AXI4_DATA_WIDTH_P);
   endproperty
-  VIP_AXI4_AWSIZE_PR: assert property (VIP_AXI4_AWSIZE_PR) else
+  VIP_AXI4_AWSIZE_ERROR: assert property (VIP_AXI4_AWSIZE_PR) else
     $error("VIP_AXI4_AWSIZE_PR: The size of any transfer must not exceed the data bus width of either agent in the transaction. Spec: section A3.4.1.");
 
 
@@ -161,7 +161,7 @@ module vip_axi4_wr_sva #(
     ##1 rst_n
     |-> !awvalid;
   endproperty
-  VIP_AXI4_AWVALID_RESET_PR: assert property (VIP_AXI4_AWVALID_RESET_PR) else
+  VIP_AXI4_AWVALID_RESET_ERROR: assert property (VIP_AXI4_AWVALID_RESET_PR) else
     $error("VIP_AXI4_AWVALID_RESET_PR: The earliest point after reset that a master is permitted to begin driving ARVALID, AWVALID, or WVALID HIGH is at a rising ACLK edge after ARESETn is HIGH. Spec: Figure A3-1.");
 
   // ---------------------------------------------------------------------------
@@ -173,7 +173,7 @@ module vip_axi4_wr_sva #(
     ##1 rst_n
     |-> $stable(awaddr);
   endproperty
-  VIP_AXI4_AWADDR_STABLE_PR: assert property (VIP_AXI4_AWADDR_STABLE_PR) else
+  VIP_AXI4_AWADDR_STABLE_ERROR: assert property (VIP_AXI4_AWADDR_STABLE_PR) else
     $error("VIP_AXI4_AWADDR_STABLE_PR: AWADDR must remain stable when AWVALID is asserted and AWREADY low. Spec: section A3.2.1.");
 
 
@@ -182,7 +182,7 @@ module vip_axi4_wr_sva #(
     ##1 rst_n
     |-> $stable(awburst);
   endproperty
-  VIP_AXI4_AWBURST_STABLE_PR: assert property (VIP_AXI4_AWBURST_STABLE_PR) else
+  VIP_AXI4_AWBURST_STABLE_ERROR: assert property (VIP_AXI4_AWBURST_STABLE_PR) else
     $error("VIP_AXI4_AWBURST_STABLE_PR: AWBURST must remain stable when AWVALID is asserted and AWREADY low. Spec: section A3.2.1.");
 
 
@@ -191,7 +191,7 @@ module vip_axi4_wr_sva #(
     ##1 rst_n
     |-> $stable(awid);
   endproperty
-  VIP_AXI4_AWID_STABLE_PR: assert property (VIP_AXI4_AWID_STABLE_PR) else
+  VIP_AXI4_AWID_STABLE_ERROR: assert property (VIP_AXI4_AWID_STABLE_PR) else
     $error("VIP_AXI4_AWID_STABLE_PR: AWID must remain stable when AWVALID is asserted and AWREADY low. Spec: section A3.2.1.");
 
 
@@ -200,7 +200,7 @@ module vip_axi4_wr_sva #(
     ##1 rst_n
     |-> $stable(awlen);
   endproperty
-  VIP_AXI4_AWLEN_STABLE_PR: assert property (VIP_AXI4_AWLEN_STABLE_PR) else
+  VIP_AXI4_AWLEN_STABLE_ERROR: assert property (VIP_AXI4_AWLEN_STABLE_PR) else
     $error("VIP_AXI4_AWLEN_STABLE_PR: AWLEN must remain stable when AWVALID is asserted and AWREADY low. Spec: section A3.2.1.");
 
 
@@ -209,7 +209,7 @@ module vip_axi4_wr_sva #(
     ##1 rst_n
     |-> $stable(awlock);
   endproperty
-  VIP_AXI4_AWLOCK_STABLE_PR: assert property (VIP_AXI4_AWLOCK_STABLE_PR) else
+  VIP_AXI4_AWLOCK_STABLE_ERROR: assert property (VIP_AXI4_AWLOCK_STABLE_PR) else
     $error("VIP_AXI4_AWLOCK_STABLE_PR: AWLOCK must remain stable when AWVALID is asserted and AWREADY low. Spec: section A3.2.1.");
 
 
@@ -218,7 +218,7 @@ module vip_axi4_wr_sva #(
     ##1 rst_n
     |-> $stable(awsize);
   endproperty
-  VIP_AXI4_AWSIZE_STABLE_PR: assert property (VIP_AXI4_AWSIZE_STABLE_PR) else
+  VIP_AXI4_AWSIZE_STABLE_ERROR: assert property (VIP_AXI4_AWSIZE_STABLE_PR) else
     $error("VIP_AXI4_AWSIZE_STABLE_PR: AWSIZE must remain stable when AWVALID is asserted and AWREADY low. Spec: section A3.2.1.");
 
 
@@ -227,7 +227,7 @@ module vip_axi4_wr_sva #(
     ##1 rst_n
     |-> $stable(awqos);
   endproperty
-  VIP_AXI4_AWQOS_STABLE_PR: assert property (VIP_AXI4_AWQOS_STABLE_PR) else
+  VIP_AXI4_AWQOS_STABLE_ERROR: assert property (VIP_AXI4_AWQOS_STABLE_PR) else
     $error("VIP_AXI4_AWQOS_STABLE_PR: AWQOS must remain stable when AWVALID is asserted and AWREADY low. Spec: section A3.2.1.");
 
 
@@ -236,7 +236,7 @@ module vip_axi4_wr_sva #(
     ##1 rst_n
     |-> $stable(awregion);
   endproperty
-  VIP_AXI4_AWREGION_STABLE_PR: assert property (VIP_AXI4_AWREGION_STABLE_PR) else
+  VIP_AXI4_AWREGION_STABLE_ERROR: assert property (VIP_AXI4_AWREGION_STABLE_PR) else
     $error("VIP_AXI4_AWREGION_STABLE_PR: AWREGION must remain stable when ARVALID is asserted and AWREADY low. Spec: section A3.2.1.");
 
 
@@ -245,7 +245,7 @@ module vip_axi4_wr_sva #(
     ##1 rst_n
     |-> awvalid;
   endproperty
-  VIP_AXI4_AWVALID_STABLE_PR: assert property (VIP_AXI4_AWVALID_STABLE_PR) else
+  VIP_AXI4_AWVALID_STABLE_ERROR: assert property (VIP_AXI4_AWVALID_STABLE_PR) else
     $error("VIP_AXI4_AWVALID_STABLE_PR: Once AWVALID is asserted, it must remain asserted until AWREADY is high. Spec: section A3.2.2.");
 
   // ---------------------------------------------------------------------------
@@ -270,7 +270,7 @@ module vip_axi4_wr_sva #(
 
   //property VIP_AXI4_WDATA_STABLE_PR;
   //endproperty
-  //VIP_AXI4_WDATA_STABLE_PR: assert property (VIP_AXI4_WDATA_STABLE_PR) else
+  //VIP_AXI4_WDATA_STABLE_ERROR: assert property (VIP_AXI4_WDATA_STABLE_PR) else
   //  $error("VIP_AXI4_WDATA_STABLE_PR: WDATA must remain stable when WVALID is asserted and WREADY low. Spec: section A3.2.1.");
 
 
@@ -279,7 +279,7 @@ module vip_axi4_wr_sva #(
     ##1 rst_n
     |-> $stable(wlast);
   endproperty
-  VIP_AXI4_WLAST_STABLE_PR: assert property (VIP_AXI4_WLAST_STABLE_PR) else
+  VIP_AXI4_WLAST_STABLE_ERROR: assert property (VIP_AXI4_WLAST_STABLE_PR) else
     $error("VIP_AXI4_WLAST_STABLE_PR: WLAST must remain stable when WVALID is asserted and WREADY low. Spec: section A3.2.1.");
 
 
@@ -288,7 +288,7 @@ module vip_axi4_wr_sva #(
     ##1 rst_n
     |-> $stable(wstrb);
   endproperty
-  VIP_AXI4_WSTRB_STABLE_PR: assert property (VIP_AXI4_WSTRB_STABLE_PR) else
+  VIP_AXI4_WSTRB_STABLE_ERROR: assert property (VIP_AXI4_WSTRB_STABLE_PR) else
     $error("VIP_AXI4_WSTRB_STABLE_PR: WSTRB must remain stable when WVALID is asserted and WREADY low. Spec: section A3.2.1.");
 
 
@@ -297,7 +297,7 @@ module vip_axi4_wr_sva #(
     ##1 rst_n
     |-> wvalid;
   endproperty
-  VIP_AXI4_WVALID_STABLE_PR: assert property (VIP_AXI4_WVALID_STABLE_PR) else
+  VIP_AXI4_WVALID_STABLE_ERROR: assert property (VIP_AXI4_WVALID_STABLE_PR) else
     $error("VIP_AXI4_WVALID_STABLE_PR: Once WVALID is asserted, it must remain asserted until WREADY is high. Spec: section A3.2.2.");
 
   // ---------------------------------------------------------------------------
@@ -316,7 +316,7 @@ module vip_axi4_wr_sva #(
     ##1 rst_n
     |-> !bvalid;
   endproperty
-  VIP_AXI4_BVALID_RESET_PR: assert property (VIP_AXI4_BVALID_RESET_PR) else
+  VIP_AXI4_BVALID_RESET_ERROR: assert property (VIP_AXI4_BVALID_RESET_PR) else
     $error("VIP_AXI4_BVALID_RESET_PR: The earliest point after reset that a master is permitted to begin driving ARVALID, AWVALID, or WVALID HIGH is at a rising ACLK edge after ARESETn is HIGH. Spec: Figure A3-1.");
 
   // ---------------------------------------------------------------------------
@@ -328,7 +328,7 @@ module vip_axi4_wr_sva #(
     ##1 rst_n
     |-> $stable(bid);
   endproperty
-  VIP_AXI4_BID_STABLE_PR: assert property (VIP_AXI4_BID_STABLE_PR) else
+  VIP_AXI4_BID_STABLE_ERROR: assert property (VIP_AXI4_BID_STABLE_PR) else
     $error("VIP_AXI4_BID_STABLE_PR: BID must remain stable when BVALID is asserted and BREADY low. Spec: section A3.2.1.");
 
 
@@ -337,7 +337,7 @@ module vip_axi4_wr_sva #(
     ##1 rst_n
     |-> $stable(bresp);
   endproperty
-  VIP_AXI4_BRESP_STABLE_PR: assert property (VIP_AXI4_BRESP_STABLE_PR) else
+  VIP_AXI4_BRESP_STABLE_ERROR: assert property (VIP_AXI4_BRESP_STABLE_PR) else
     $error("VIP_AXI4_BRESP_STABLE_PR: BRESP must remain stable when BVALID is asserted and BREADY low. Spec: section A3.2.1.");
 
 
@@ -346,7 +346,7 @@ module vip_axi4_wr_sva #(
     ##1 rst_n
     |-> bvalid;
   endproperty
-  VIP_AXI4_BVALID_STABLE_PR: assert property (VIP_AXI4_BVALID_STABLE_PR) else
+  VIP_AXI4_BVALID_STABLE_ERROR: assert property (VIP_AXI4_BVALID_STABLE_PR) else
     $error("VIP_AXI4_BVALID_STABLE_PR: Once BVALID is asserted, it must remain asserted until BREADY is high. Spec: section A3.2.2.");
 
   // ---------------------------------------------------------------------------
