@@ -1,0 +1,11 @@
+module_path=$git_root/vip_axi4_sva
+
+rtl_dirs+="
+  +incdir+$module_path
+"
+
+rtl_files+="
+  $module_path/vip_axi4_wr_sva.sv
+  $module_path/vip_axi4_rd_sva.sv
+  $module_path/vip_axi4_sva.sv
+"
