@@ -394,8 +394,8 @@ class vip_axi4_driver #(
         if (beat_counter == burst_length) begin
           if (cfg.wvalid_delay_enabled) begin
             disable fork;
-            vif.wvalid <= '0;
           end
+          vif.wvalid <= '0;
         end
 
       end
