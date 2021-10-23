@@ -17,7 +17,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 // Description:
-// TODO: Memory: unaligned memory addresses, wrap, size
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -26,6 +25,11 @@ class vip_axi4_driver #(
   ) extends uvm_driver #(vip_axi4_item #(CFG_P));
 
   typedef logic [CFG_P.VIP_AXI4_ADDR_WIDTH_P-1 : 0] mem_addr_type_t;
+
+  localparam vip_mem_cfg_t MEM_C = {
+    ADDR_WIDTH_P : CFG_P.VIP_AXI4_ADDR_WIDTH_P,
+    DATA_BYTES_P : CFG_P.VIP_AXI4_DATA_WIDTH_P/8
+  };
 
   // Analysis FIFOs connected to the monitor's analysis ports
   uvm_analysis_port     #(vip_axi4_item #(CFG_P)) rd_request_port;
@@ -47,10 +51,9 @@ class vip_axi4_driver #(
   protected vip_axi4_item #(CFG_P) _wdata_queue  [$]; // TODO
 
   // Memory
-  protected logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] _memory [mem_addr_type_t];
-  protected longint                                   _memory_depth;
-  protected logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] _write_row;
-            int                                       ooo_counter;
+  protected vip_mem #(MEM_C) _mem;
+  protected longint          _memory_depth;
+            int              ooo_counter;
 
   // Read and Write collision detection
   protected logic  [CFG_P.VIP_AXI4_ADDR_WIDTH_P-1 : 0] _current_araddr_start;
@@ -67,6 +70,9 @@ class vip_axi4_driver #(
   // ---------------------------------------------------------------------------
   function new (string name, uvm_component parent);
     super.new(name, parent);
+    if (cfg.vip_axi4_agent_type == VIP_AXI4_SLAVE_AGENT_E) begin
+      _mem = new();
+    end
     rd_request_port  = new("rd_request_port", this);
     rd_response_fifo = new("rd_response_fifo", this);
   endfunction
@@ -102,6 +108,7 @@ class vip_axi4_driver #(
         if (_memory_depth == 0) begin
           `uvm_fatal("RANGE", $sformatf("The memory depth was calculated to (%0d)", _memory_depth))
         end
+        _mem.set_depth(_memory_depth);
       end
     end
   endfunction
@@ -765,64 +772,7 @@ class vip_axi4_driver #(
         end
 
         // Writing the data to memory
-        write_counter = 0;
-        for (int i = memory_start_index; i < memory_stop_index; i++) begin
-
-          if (wr_req.wstrb[write_counter] == '1) begin
-
-            if (cfg.mem_x_wr_severity != VIP_AXI4_X_WR_IGNORE_E) begin
-              if (^wr_req.wdata[write_counter] === 1'bX) begin
-                if (cfg.mem_x_wr_severity == VIP_AXI4_X_WR_WARNING_E) begin
-                  `uvm_warning(get_name(), $sformatf("MEM: Writing X to index (%0d), address = (%h)", memory_start_index, wr_req.awaddr))
-                end else begin
-                  `uvm_fatal(get_name(), $sformatf("MEM: Writing X to index (%0d), address = (%h)", memory_start_index, wr_req.awaddr))
-                end
-              end
-            end
-
-            _memory[i] = wr_req.wdata[write_counter];
-
-          end
-          else begin
-
-            // Only writing bytes that have 'wstrb' high
-            _write_row = '0;
-
-            for (int s = 0; s < CFG_P.VIP_AXI4_STRB_WIDTH_P; s++) begin
-
-              if (wr_req.wstrb[write_counter][s]) begin
-
-                if (cfg.mem_x_wr_severity != VIP_AXI4_X_WR_IGNORE_E) begin
-                  if (^wr_req.wdata[write_counter][8*s +: 8] === 1'bX) begin
-                    if (cfg.mem_x_wr_severity == VIP_AXI4_X_WR_WARNING_E) begin
-                      `uvm_warning(get_name(), $sformatf("MEM: Writing X to index (%0d), address = (%h), byte = (%0d)", memory_start_index, wr_req.awaddr, s))
-                    end else begin
-                      `uvm_fatal(get_name(), $sformatf("MEM: Writing X to index (%0d), address = (%h), byte = (%0d)", memory_start_index, wr_req.awaddr, s))
-                    end
-                  end
-                end
-
-                _write_row[8*s +: 8] = wr_req.wdata[write_counter][8*s +: 8];
-
-              end
-              else begin
-
-                if (!_memory.exists(i)) begin
-                  _write_row[8*s +: 8] = '0;
-                end
-                else if (^_memory[i][8*s +: 8] === 1'bX) begin
-                  _write_row[8*s +: 8] = '0;
-                end
-                else begin
-                  _write_row[8*s +: 8] = _memory[i][8*s +: 8];
-                end
-              end
-            end
-
-            _memory[i] = _write_row;
-          end
-          write_counter++;
-        end
+        _mem.wr_axi4(wr_req.awaddr, wr_req.awlen, wr_req.wdata, wr_req.wstrb);
       end
 
       if (cfg.bresp_enabled) begin
@@ -887,12 +837,7 @@ class vip_axi4_driver #(
 
       for (int i = read_start_index; i < read_stop_index; i++) begin
 
-        if (!_memory.exists(i)) begin
-          vif.rdata <= '0;
-        end else begin
-          vif.rdata <= _memory[i];
-        end
-
+        vif.rdata <= _mem.rd_index(i);
         vif.rlast <= (i == read_stop_index-1);
 
         @(posedge vif.clk);
@@ -1029,43 +974,32 @@ class vip_axi4_driver #(
   // ---------------------------------------------------------------------------
   function void memory_reset();
     `uvm_info(get_name(), "Resetting the memory", UVM_LOW)
-    _memory.delete();
+    _mem.reset();
   endfunction
 
   // ---------------------------------------------------------------------------
   // This function will randomize all data in the memory
   // ---------------------------------------------------------------------------
   function void memory_randomize();
-    logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] _r;
-    for (int i = 0; i < (2**cfg.mem_addr_width)/CFG_P.VIP_AXI4_STRB_WIDTH_P; i++) begin
-      void'(std::randomize(_r));
-      _memory[i] = _r;
-    end
+    _mem.randomize_memory();
   endfunction
 
   // ---------------------------------------------------------------------------
   // Write an array of data (data) to the memory starting at some address (addr)
   // ---------------------------------------------------------------------------
-  function void memory_write(logic [CFG_P.VIP_AXI4_ADDR_WIDTH_P-1 : 0] addr,
-                             logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] data[$]);
+  function void memory_write(
+      logic [CFG_P.VIP_AXI4_ADDR_WIDTH_P-1 : 0] addr,
+      logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] data[$]
+    );
 
-    int memory_start_index = unsigned'(addr) / CFG_P.VIP_AXI4_STRB_WIDTH_P;
-    int memory_stop_index  = memory_start_index + data.size() - 1;
-
-    foreach (data[i]) begin
-      _memory[memory_start_index + i] = data[i];
-    end
+    _mem.wr(addr, data);
   endfunction
 
   // ---------------------------------------------------------------------------
   // This function returns data for an index in the memory array
   // ---------------------------------------------------------------------------
   function logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] memory_read_index(int index);
-    if (!_memory.exists(index)) begin
-      memory_read_index = '0;
-    end else begin
-      memory_read_index = _memory[index];
-    end
+    memory_read_index = _mem.rd_index(index);
   endfunction
 
 endclass
