@@ -54,9 +54,31 @@ class vip_axi4_base_seq #(vip_axi4_cfg_t CFG_P = '{default: '0})
   function new(string name = "vip_axi4_base_seq");
     super.new(name);
     _cfg = new();
-    _cfg.max_id   = 2**CFG_P.VIP_AXI4_ID_WIDTH_P-1;
-    _cfg.min_size = size_as_enum(CFG_P.VIP_AXI4_STRB_WIDTH_P);
-    _cfg.max_size = size_as_enum(CFG_P.VIP_AXI4_STRB_WIDTH_P);
+    reset();
+  endfunction
+
+
+  function void reset();
+    vip_axi4_access_t axi4_access = _cfg.axi4_access;
+    _cfg.reset();
+    _cfg.axi4_access       = axi4_access;
+    _cfg.max_id            = 2**CFG_P.VIP_AXI4_ID_WIDTH_P-1;
+    _cfg.min_size          = size_as_enum(CFG_P.VIP_AXI4_STRB_WIDTH_P);
+    _cfg.max_size          = size_as_enum(CFG_P.VIP_AXI4_STRB_WIDTH_P);
+    _verbose               = TRUE;
+    _log_denominator       = 100;
+    _addr                  = '0;
+    _enable_addr_increment = TRUE;
+    _addr_increment        = '0;
+    _counter               = '0;
+    _nr_of_requests        = 0;
+    _combine_requests      = FALSE;
+    _request_delay_enabled = FALSE;
+    _request_delay_min     = 0;
+    _request_delay_max     = 0;
+    _custom_data.delete();
+    _custom_len_max        = TRUE;
+    _rd_responses.delete();
   endfunction
 
 

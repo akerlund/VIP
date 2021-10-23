@@ -280,6 +280,7 @@ class vip_axi4_monitor #(
         araddr_item.aruser   = vif.aruser;
 
         channel_id = int'(vif.arid);
+        // NOTE: Vivado does not support push_back(araddr_item.clone())
         _araddr_items[channel_id].push_back(araddr_item);
         $cast(araddr_item, araddr_item.clone());
 
@@ -310,6 +311,8 @@ class vip_axi4_monitor #(
         _ruser_beats.push_back(vif.ruser);
 
         if (vif.rlast === '1) begin
+
+          rdata_item = new();
 
           if (cfg.monitor_merge_reads == TRUE) begin
 

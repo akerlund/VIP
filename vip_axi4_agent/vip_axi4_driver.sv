@@ -70,9 +70,6 @@ class vip_axi4_driver #(
   // ---------------------------------------------------------------------------
   function new (string name, uvm_component parent);
     super.new(name, parent);
-    if (cfg.vip_axi4_agent_type == VIP_AXI4_SLAVE_AGENT_E) begin
-      _mem = new();
-    end
     rd_request_port  = new("rd_request_port", this);
     rd_response_fifo = new("rd_response_fifo", this);
   endfunction
@@ -83,6 +80,10 @@ class vip_axi4_driver #(
   function void build_phase(uvm_phase phase);
 
     super.build_phase(phase);
+
+    if (cfg.vip_axi4_agent_type == VIP_AXI4_SLAVE_AGENT_E) begin
+      _mem = new();
+    end
 
     if (!uvm_config_db #(virtual vip_axi4_if #(CFG_P))::get(this, "", "vif", vif)) begin
       `uvm_fatal("NOVIF", {"Virtual interface must be set for: ", get_full_name(), ".vif"});
@@ -118,16 +119,15 @@ class vip_axi4_driver #(
   // ---------------------------------------------------------------------------
   virtual task run_phase(uvm_phase phase);
 
-    fork
-      reset_vif();
-    join_none
-
     forever begin
-      @(posedge vif.rst_n);
       fork
-        driver_start();
+        begin
+          @(posedge vif.rst_n);
+          driver_start();
+        end
       join_none
       @(negedge vif.rst_n);
+      reset_vif();
       disable fork;
     end
   endtask
@@ -181,84 +181,77 @@ class vip_axi4_driver #(
   // ---------------------------------------------------------------------------
   protected task reset_vif();
 
+    `uvm_info(get_name(), "VIF Reset", UVM_LOW)
     if (cfg.vip_axi4_agent_type == VIP_AXI4_MASTER_AGENT_E) begin
 
-      forever begin
+      // Write Address Channel
+      vif.awid     <= '0;
+      vif.awaddr   <= '0;
+      vif.awlen    <= '0;
+      vif.awsize   <= '0;
+      vif.awburst  <= '0;
+      vif.awlock   <= '0;
+      vif.awcache  <= '0;
+      vif.awprot   <= '0;
+      vif.awqos    <= '0;
+      vif.awregion <= '0;
+      vif.awuser   <= '0;
+      vif.awvalid  <= '0;
 
-        @(negedge vif.rst_n);
+      // Write Data Channel
+      vif.wdata    <= '0;
+      vif.wstrb    <= '0;
+      vif.wlast    <= '0;
+      vif.wuser    <= '0;
+      vif.wvalid   <= '0;
 
-        // Write Address Channel
-        vif.awid     <= '0;
-        vif.awaddr   <= '0;
-        vif.awlen    <= '0;
-        vif.awsize   <= '0;
-        vif.awburst  <= '0;
-        vif.awlock   <= '0;
-        vif.awcache  <= '0;
-        vif.awprot   <= '0;
-        vif.awqos    <= '0;
-        vif.awregion <= '0;
-        vif.awuser   <= '0;
-        vif.awvalid  <= '0;
+      // Write Response Channel
+      vif.bready   <= '0;
 
-        // Write Data Channel
-        vif.wdata    <= '0;
-        vif.wstrb    <= '0;
-        vif.wlast    <= '0;
-        vif.wuser    <= '0;
-        vif.wvalid   <= '0;
+      // Read Address Channel
+      vif.arid     <= '0;
+      vif.araddr   <= '0;
+      vif.arlen    <= '0;
+      vif.arsize   <= '0;
+      vif.arburst  <= '0;
+      vif.arlock   <= '0;
+      vif.arcache  <= '0;
+      vif.arprot   <= '0;
+      vif.arqos    <= '0;
+      vif.arregion <= '0;
+      vif.aruser   <= '0;
+      vif.arvalid  <= '0;
 
-        // Write Response Channel
-        vif.bready   <= '0;
+      // Read Data Channel
+      vif.rready  <= '0;
 
-        // Read Address Channel
-        vif.arid     <= '0;
-        vif.araddr   <= '0;
-        vif.arlen    <= '0;
-        vif.arsize   <= '0;
-        vif.arburst  <= '0;
-        vif.arlock   <= '0;
-        vif.arcache  <= '0;
-        vif.arprot   <= '0;
-        vif.arqos    <= '0;
-        vif.arregion <= '0;
-        vif.aruser   <= '0;
-        vif.arvalid  <= '0;
-
-        // Read Data Channel
-        vif.rready  <= '0;
-      end
     end
 
     if (cfg.vip_axi4_agent_type == VIP_AXI4_SLAVE_AGENT_E) begin
 
-      forever begin
+      // Write Address Channel
+      vif.awready <= '0;
 
-        @(negedge vif.rst_n);
+      // Write Data Channel
+      vif.wready  <= '0;
 
-        // Write Address Channel
-        vif.awready <= '0;
+      // Write Response Channel
+      vif.bid     <= '0;
+      vif.bresp   <= '0;
+      vif.buser   <= '0;
+      vif.bvalid  <= '0;
 
-        // Write Data Channel
-        vif.wready  <= '0;
+      // Read Address Channel
+      vif.arready <= '0;
 
-        // Write Response Channel
-        vif.bid     <= '0;
-        vif.bresp   <= '0;
-        vif.buser   <= '0;
-        vif.bvalid  <= '0;
+      // Read Data Channel
+      vif.rid     <= '0;
+      vif.rdata   <= '0;
+      vif.rresp   <= '0;
+      vif.rlast   <= '0;
+      vif.ruser   <= '0;
+      vif.rvalid  <= '0;
 
-        // Read Address Channel
-        vif.arready <= '0;
-
-        // Read Data Channel
-        vif.rid     <= '0;
-        vif.rdata   <= '0;
-        vif.rresp   <= '0;
-        vif.rlast   <= '0;
-        vif.ruser   <= '0;
-        vif.rvalid  <= '0;
-      end
     end
   endtask
 
@@ -332,7 +325,14 @@ class vip_axi4_driver #(
     _req_queue = req.req_queue;
     _req_queue.push_front(req);
 
-    vif.awvalid  <= '1;
+    if (cfg.awvalid_delay_enabled) begin
+      fork
+        drive_awvalid();
+      join_none
+    end else begin
+      vif.awvalid <= '1;
+    end
+
     for (int i = 0; i < _req_queue.size(); i++) begin
       vif.awid     <= _req_queue[i].awid;
       vif.awaddr   <= _req_queue[i].awaddr;
@@ -346,10 +346,19 @@ class vip_axi4_driver #(
       vif.awregion <= _req_queue[i].awregion;
       vif.awuser   <= _req_queue[i].awuser;
       @(posedge vif.clk);
-      while (vif.awready !== '1) begin
+      while (!(vif.awvalid === '1 && vif.awready === '1)) begin
         @(posedge vif.clk);
       end
+
+      if (i == (_req_queue.size()-1)) begin
+        if (cfg.awvalid_delay_enabled) begin
+          disable fork;
+        end
+        vif.awvalid <= '0;
+      end
+
     end
+
     _req_queue.delete();
     vif.awvalid <= '0;
   endtask
@@ -422,6 +431,38 @@ class vip_axi4_driver #(
     _req_queue.delete();
     vif.wvalid <= '0;
 
+  endtask
+
+  // ---------------------------------------------------------------------------
+  // VIP_AXI4_MASTER_AGENT_E: Write Address Channel
+  // ---------------------------------------------------------------------------
+  protected task drive_awvalid();
+
+    int clock_counter        = 0;
+    int awvalid_delay_time   = 0;
+    int awvalid_delay_period = $urandom_range(cfg.max_awvalid_delay_period, cfg.min_awvalid_delay_period);
+
+    vif.awvalid <= '1;
+
+    while (1) begin
+
+      @(posedge vif.clk);
+      clock_counter++;
+
+      if (clock_counter >= awvalid_delay_period &&
+          vif.awvalid === '1 && vif.awready === '1) begin
+        vif.awvalid         <= '0;
+        clock_counter        = 0;
+        awvalid_delay_time   = $urandom_range(cfg.max_awvalid_delay_time,   cfg.min_awvalid_delay_time);
+        awvalid_delay_period = $urandom_range(cfg.max_awvalid_delay_period, cfg.min_awvalid_delay_period);
+        `uvm_info(get_name(), $sformatf("De-asserting 'awvalid' for (%0d) clock periods", awvalid_delay_time), UVM_HIGH)
+        repeat (awvalid_delay_time) @(posedge vif.clk);
+      end
+      else begin
+        vif.awvalid <= '1;
+      end
+
+    end
   endtask
 
   // ---------------------------------------------------------------------------

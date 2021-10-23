@@ -154,8 +154,10 @@ class vip_axi4_agent #(
   // ---------------------------------------------------------------------------
   // Write an array of data (data) to the memory starting at some address (addr)
   // ---------------------------------------------------------------------------
-  function void memory_write(logic [CFG_P.VIP_AXI4_ADDR_WIDTH_P-1 : 0] addr,
-                             logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] data[$]);
+  function void memory_write(
+      logic [CFG_P.VIP_AXI4_ADDR_WIDTH_P-1 : 0] addr,
+      logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] data[$]
+    );
     driver.memory_write(addr, data);
   endfunction
 

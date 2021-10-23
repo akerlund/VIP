@@ -69,4 +69,26 @@ class vip_axi4_item_config extends uvm_object;
     super.new(name);
   endfunction
 
+  function void reset();
+    axi4_access     = VIP_AXI4_WR_REQUEST_E;
+    axi4_id_type    = VIP_AXI4_ID_COUNTER_E;
+    axi4_data_type  = VIP_AXI4_DATA_COUNTER_E;
+    axi4_strb       = VIP_AXI4_STRB_ALL_E;
+    get_rd_response = FALSE;
+    enable_boundary = FALSE;
+    counter_data    = 0;
+    counter_id      = 0;
+    min_id          = 0;
+    max_id          = 0;
+    min_addr        = 0;
+    max_addr        = VIP_AXI4_4K_ADDRESS_BOUNDARY_C-1;
+    addr_boundary   = 0;
+    min_len         = 0;
+    max_len         = 255;
+    min_size        = VIP_AXI4_SIZE_16B_C;
+    max_size        = VIP_AXI4_SIZE_16B_C;
+    max_burst       = VIP_AXI4_BURST_INCR_C;
+    min_burst       = VIP_AXI4_BURST_INCR_C;
+  endfunction
+
 endclass
