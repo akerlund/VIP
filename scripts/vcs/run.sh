@@ -6,12 +6,13 @@ set -o pipefail
 git_root=$(git rev-parse --show-toplevel)
 script_dir=$(dirname $0)
 
-if [ "$#" -lt 3 ]; then
+if [ "$#" -lt 4 ]; then
   echo "ERROR [vcs] run script missing input parameters"
 else
-  file_list=$1
-  rundir=$2
-  cov_en=$3
+  git_root=$1
+  file_list=$2
+  rundir=$3
+  cov_en=$4
 fi
 
 function pretty_print {
@@ -45,13 +46,12 @@ source $file_list
 
 if [ ! -e $rundir ]; then
   mkdir $rundir
-  cd $rundir
-  pretty_print "INFO [vlogan] Analyzing UVM"
-  vlogan $vlogan_args
-  check_status $? "ERROR [vlogan] Analysing failed, returned ("$status")\n"
-else
-  cd $rundir
 fi
+
+cd $rundir
+pretty_print "INFO [vlogan] Analyzing UVM"
+vlogan $vlogan_args
+check_status $? "ERROR [vlogan] Analysing failed, returned ("$status")\n"
 
 pretty_print "INFO [vlogan] Analyzing source files"
 vlogan $vlogan_args $rtl_dirs $rtl_files | sed "$vlogan_junk_filter"

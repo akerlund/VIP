@@ -26,21 +26,22 @@ TC_LIST=$(patsubst %.sv,%,$(shell find ./tc -name tc_*.sv -printf "%f " 2> /dev/
 
 
 # Tool scripts
-RUN_VIVADO=$(MAKE_ROOT)/scripts/vivado/run.sh
-RUN_XSCT=$(MAKE_ROOT)/scripts/xsct/run.sh
-RUN_ZYNQ=$(MAKE_ROOT)/scripts/vivado/run_zynq.sh
-RUN_XSIM=$(MAKE_ROOT)/scripts/vivado/xsim.sh
-RUN_VERILATOR=$(MAKE_ROOT)/scripts/verilator/run.sh
-RUN_PYRG=$(MAKE_ROOT)/../PYRG/pyrg.py
-SUM_REPORT=$(MAKE_ROOT)/scripts/vivado/summary_report.sh
-
-export
+RUN_VIVADO    = $(MAKE_ROOT)/scripts/vivado/run.sh
+RUN_XSCT      = $(MAKE_ROOT)/scripts/xsct/run.sh
+RUN_ZYNQ      = $(MAKE_ROOT)/scripts/vivado/run_zynq.sh
+RUN_XSIM      = $(MAKE_ROOT)/scripts/vivado/xsim.sh
+RUN_VERILATOR = $(MAKE_ROOT)/scripts/verilator/run.sh
+RUN_PYRG      = $(MAKE_ROOT)/../PYRG/pyrg.py
+RUN_VCS       = $(MAKE_ROOT)/scripts/vcs/run.sh
+RUN_FPV       = $(MAKE_ROOT)/scripts/fpv/run.sh
+RUN_FCA       = $(MAKE_ROOT)/scripts/fca/run.sh
+SUM_REPORT    = $(MAKE_ROOT)/scripts/vivado/summary_report.sh
 
 # ------------------------------------------------------------------------------
 # Make targets
 # ------------------------------------------------------------------------------
 
-.PHONY: help build synth route zynq pyrg verilate sw clean $(TC_LIST)
+.PHONY: help build synth route zynq pyrg verilate vitis sw fpga fpv fca list clean $(TC_LIST)
 
 help:
 	@echo "  ------------------------------------------------------------------------------"
@@ -61,6 +62,9 @@ help:
 	@echo "  vitis    : Create Vitis project"
 	@echo "  sw       : Vitis compile"
 	@echo "  fpga     : FPGA bitstream upload"
+	@echo "  vcs      : Compile with VCS"
+	@echo "  fpv      : Run Formal Propery Verification (FPV)"
+	@echo "  fca      : Run Formal Coverage Analyzer (FCA)"
 	@echo "  list     : List the module's testcases"
 	@echo "  tc_*     : Run testcase tc_*"
 	@echo "  clean    : Remove RUN_DIR"
@@ -98,6 +102,15 @@ sw:
 
 fpga:
 	@$(RUN_XSCT) $(MAKE_ROOT) $(RUN_DIR) $(COMPILE_SH) 2
+
+vcs:
+	@$(RUN_VCS) $(MAKE_ROOT) $(COMPILE_SH) $(RUN_DIR) 0
+
+fpv:
+	@$(RUN_FPV) $(MAKE_ROOT) $(COMPILE_SH) $(RUN_DIR) 1
+
+fca:
+	@$(RUN_FCA) $(MAKE_ROOT) $(COMPILE_SH) $(RUN_DIR) $(GUI)
 
 list:
 	@echo "List of testcases:"
