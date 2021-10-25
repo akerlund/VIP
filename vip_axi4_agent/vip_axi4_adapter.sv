@@ -31,6 +31,9 @@ class vip_axi4_adapter #(
 
   `uvm_object_param_utils(vip_axi4_adapter #(CFG_P))
 
+  logic [CFG_P.VIP_AXI4_ID_WIDTH_P-1 : 0] awid = '0;
+  logic [CFG_P.VIP_AXI4_ID_WIDTH_P-1 : 0] arid = '0;
+
   function new (string name = "vip_axi4_adapter");
     super.new(name);
   endfunction
@@ -45,7 +48,7 @@ class vip_axi4_adapter #(
       reg_item.cfg             = new();
       reg_item.cfg.axi4_access = VIP_AXI4_WR_REQUEST_E;
 
-      reg_item.awid   = 0;
+      reg_item.awid   = awid;
       reg_item.awaddr = rw.addr;
       reg_item.awlen  = 0;
 
@@ -55,6 +58,8 @@ class vip_axi4_adapter #(
       reg_item.wdata[0] = rw.data;
       reg_item.wstrb[0] = '1;
       reg_item.wuser[0] = '0;
+
+      awid = awid + 1;
 
       return reg_item;
 
@@ -68,12 +73,14 @@ class vip_axi4_adapter #(
       reg_item.cfg.axi4_access     = VIP_AXI4_RD_REQUEST_E;
       reg_item.cfg.get_rd_response = TRUE;
 
-      reg_item.arid   = 0;
+      reg_item.arid   = arid;
       reg_item.araddr = rw.addr;
       reg_item.arlen  = 0;
 
       reg_item.rdata  = new[1];
       reg_item.ruser  = new[1];
+
+      arid = arid + 1;
 
       return reg_item;
 
