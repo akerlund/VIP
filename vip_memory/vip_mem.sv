@@ -25,7 +25,8 @@ class vip_mem #(
   vip_mem_cfg_t MEM_P = '{default: '0}
  ) extends uvm_object;
 
-  typedef logic [MEM_P.ADDR_WIDTH_P-1 : 0] mem_addr_type_t;
+  typedef logic   [MEM_P.ADDR_WIDTH_P-1 : 0] mem_addr_type_t;
+  typedef logic [MEM_P.DATA_BYTES_P*8-1 : 0] mem_get_type_t [mem_addr_type_t];
 
   // Memory
   protected logic [MEM_P.DATA_BYTES_P*8-1 : 0] _memory [mem_addr_type_t];
@@ -44,6 +45,21 @@ class vip_mem #(
   // ---------------------------------------------------------------------------
   function void reset();
     _memory.delete();
+  endfunction
+
+  // ---------------------------------------------------------------------------
+  // This function will set all data
+  // ---------------------------------------------------------------------------
+  function void set(logic [MEM_P.DATA_BYTES_P*8-1 : 0] memory [mem_addr_type_t]);
+    _memory.delete();
+    _memory = memory;
+  endfunction
+
+  // ---------------------------------------------------------------------------
+  // This function will get all data
+  // ---------------------------------------------------------------------------
+  function mem_get_type_t get();
+    get = _memory;
   endfunction
 
   // ---------------------------------------------------------------------------
