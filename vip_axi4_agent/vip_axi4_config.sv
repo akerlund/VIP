@@ -30,8 +30,8 @@ class vip_axi4_config extends uvm_object;
   vip_axi4_agent_type_t   vip_axi4_agent_type = VIP_AXI4_MASTER_AGENT_E;
   bool_t                  monitor_disabled    = FALSE;
   // Merge Read Data bus with Read Address bus using arid and rid to locate
-  // respective transaction in a saved array. Disable this the Agent is used
-  /// as a Slave to stimulate Read Data Channel only.
+  // respective transaction in a saved array. Disable this if the Agent is used
+  // as a Slave to stimulate Read Data Channel only.
   bool_t                  monitor_merge_reads = TRUE;
   bool_t                  bresp_enabled       = TRUE;
 
