@@ -26,6 +26,7 @@ import bch_tc_pkg::*;
 
 module bch_tb_top;
   initial begin
+    $timeformat(-9, 0, "", 11);  // units, precision, suffix, min field width
     run_test();
     $stop();
   end
