@@ -28,29 +28,12 @@ package vip_bch_pkg;
   `include "uvm_macros.svh"
   import uvm_pkg::*;
 
+  import vip_bch_constants_pkg::*;
   import vip_bch_types_pkg::*;
-  //import vip_bch_types_pkg::*;
-
-  localparam int unsigned MIN_M_C = 5;
-  localparam int unsigned MAX_M_C = 15;
-  localparam int unsigned PRIMITIVE_POLYNOMIALS_C [] = {
-    'h0025, // m = 5
-    'h0043, // m = 6
-    'h0083, // m = 7
-    'h011d, // m = 8
-    'h0211, // m = 9
-    'h0409, // m = 10
-    'h0805, // m = 11
-    'h1053, // m = 12
-    'h201b, // m = 13
-    'h402b, // m = 14
-    'h8003  // m = 15
-  };
 
   `include "vip_bch_config.sv"
+  `include "vip_bch.sv"
 
 endpackage
-
-import vip_bch_pkg::*;
 
 `endif

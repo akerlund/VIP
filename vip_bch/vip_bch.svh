@@ -24,6 +24,7 @@
 `define VIP_BCH_AGENT_SVH
 
 `include "bool_pkg.sv"
+`include "vip_bch_constants_pkg.sv"
 `include "vip_bch_types_pkg.sv"
 `include "vip_bch_functions_pkg.sv"
 `include "vip_bch_pkg.sv"

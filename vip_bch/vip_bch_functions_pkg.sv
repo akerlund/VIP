@@ -27,11 +27,11 @@
 
 package vip_bch_functions_pkg;
 
-  import vip_bch_pkg::*;
   import vip_bch_types_pkg::*;
+  import vip_bch_constants_pkg::*;
 
   // ---------------------------------------------------------------------------
-  //
+  // Initial test function
   // ---------------------------------------------------------------------------
   function vip_bch_coef_t get_bch_coefficients(int m, int t);
 
@@ -58,7 +58,5 @@ package vip_bch_functions_pkg;
   endfunction
 
 endpackage
-
-import vip_bch_functions_pkg::*;
 
 `endif

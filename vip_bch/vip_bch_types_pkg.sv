@@ -36,10 +36,6 @@ package vip_bch_types_pkg;
   } vip_bch_coef_t;
 
   /*
-    logic unsigned [15 : 0] a_pow_tab []; // Galois field GF(2^m) exponentiation lookup table
-    logic unsigned [15 : 0] a_log_tab []; // Galois field GF(2^m) log lookup table
-    int   unsigned          mod8_tab  []; // Remainder generator polynomial lookup tables
-    int   unsigned          xi_tab    []; // GF(2^m) base for solving degree 2 polynomial roots
   typedef packed struct {
     unsigned int deg; // Polynomial degree
     unsigned int c[]; // Polynomial terms
@@ -47,7 +43,5 @@ package vip_bch_types_pkg;
   */
 
 endpackage
-
-import vip_bch_types_pkg::*;
 
 `endif
