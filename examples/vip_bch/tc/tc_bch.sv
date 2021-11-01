@@ -39,13 +39,7 @@ class tc_bch extends uvm_test;
     super.run_phase(phase);
     phase.raise_objection(this);
 
-    _bch_coef.m = 1;
-    _bch_coef.n = 1;
-    _bch_coef.t = 1;
-    _bch_coef.k = 1;
-    _bch_coef.d = 1;
-    _bch_coef.e = 1;
-    _bch_coef.s = 1;
+    _bch_coef = get_bch_coefficients(5, 2);
     _bch_config = new();
     _bch_config.set_bch_coefficients(_bch_coef);
 

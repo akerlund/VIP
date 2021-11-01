@@ -25,7 +25,7 @@
 
 `include "bool_pkg.sv"
 `include "vip_bch_types_pkg.sv"
-//`include "vip_bch_functions_pkg.sv"
+`include "vip_bch_functions_pkg.sv"
 `include "vip_bch_pkg.sv"
 
 `endif
