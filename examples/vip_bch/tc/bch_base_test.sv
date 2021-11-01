@@ -20,39 +20,36 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-class tc_bch extends bch_base_test;
+class bch_base_test extends uvm_test;
 
-  `uvm_component_utils(tc_bch)
+  `uvm_component_utils(bch_base_test)
 
-  protected vip_bch_config _bch_config;
-  protected vip_bch_coef_t _bch_coef;
-  protected vip_bch        _bch;
+  uvm_table_printer uvm_table_printer0;
+  report_server     report_server0;
 
-  function new(string name = "tc_bch", uvm_component parent = null);
+  function new(string name = "bch_base_test", uvm_component parent = null);
     super.new(name, parent);
   endfunction
 
+
   virtual function void build_phase(uvm_phase phase);
     super.build_phase(phase);
-    _bch_config = vip_bch_config::type_id::create("_bch_config", this);
-    _bch        = vip_bch::type_id::create("_bch", this);
+    uvm_config_db #(uvm_verbosity)::set(this, "*", "recording_detail", UVM_FULL);
+    report_server0 = new("report_server0");
+    uvm_report_server::set_server(report_server0);
+    uvm_table_printer0                     = new();
+    uvm_table_printer0.knobs.depth         = 3;
+    uvm_table_printer0.knobs.default_radix = UVM_DEC;
   endfunction
+
+
+  function void end_of_elaboration_phase(uvm_phase phase);
+    super.end_of_elaboration_phase(phase);
+  endfunction
+
 
   task run_phase(uvm_phase phase);
     super.run_phase(phase);
-    phase.raise_objection(this);
-
-    _bch_coef   = get_bch_coefficients(5, 2);
-    _bch_config.set_bch_coefficients(_bch_coef);
-
-    $display("--------------------------------------------------------------------------------");
-    $display("BCH TEST");
-    $display("--------------------------------------------------------------------------------");
-
-    `uvm_info(get_name(), {"BCH coefficients:\n", _bch_config.sprint()}, UVM_LOW)
-
-    _bch.init();
-
-    phase.drop_objection(this);
   endtask
+
 endclass

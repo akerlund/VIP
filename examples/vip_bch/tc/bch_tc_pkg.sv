@@ -26,10 +26,12 @@ package bch_tc_pkg;
   import uvm_pkg::*;
 
   import bool_pkg::*;
-  import vip_bch_pkg::*;
+  import report_server_pkg::*;
   import vip_bch_types_pkg::*;
   import vip_bch_functions_pkg::*;
+  import vip_bch_pkg::*;
 
+  `include "bch_base_test.sv"
   `include "tc_bch.sv"
 
 endpackage
