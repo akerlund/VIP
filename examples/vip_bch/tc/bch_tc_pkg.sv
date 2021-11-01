@@ -26,7 +26,8 @@ package bch_tc_pkg;
   import uvm_pkg::*;
 
   import bool_pkg::*;
-  //import vip_bch_pkg::*;
+  import vip_bch_pkg::*;
+  import vip_bch_types_pkg::*;
 
   `include "tc_bch.sv"
 

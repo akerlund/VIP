@@ -24,17 +24,36 @@ class tc_bch extends uvm_test;
 
   `uvm_component_utils(tc_bch)
 
+  protected vip_bch_config _bch_config;
+  protected vip_bch_coef_t _bch_coef;
+
   function new(string name = "tc_bch", uvm_component parent = null);
     super.new(name, parent);
+  endfunction
+
+  virtual function void build_phase(uvm_phase phase);
+    _bch_config = vip_bch_config::type_id::create("_bch_config", this);
   endfunction
 
   task run_phase(uvm_phase phase);
     super.run_phase(phase);
     phase.raise_objection(this);
 
+    _bch_coef.m = 1;
+    _bch_coef.n = 1;
+    _bch_coef.t = 1;
+    _bch_coef.k = 1;
+    _bch_coef.d = 1;
+    _bch_coef.e = 1;
+    _bch_coef.s = 1;
+    _bch_config = new();
+    _bch_config.set_bch_coefficients(_bch_coef);
+
     $display("--------------------------------------------------------------------------------");
     $display("BCH TEST");
     $display("--------------------------------------------------------------------------------");
+
+    `uvm_info(get_name(), {"BCH coefficients:\n", _bch_config.sprint()}, UVM_LOW)
 
     phase.drop_objection(this);
   endtask
