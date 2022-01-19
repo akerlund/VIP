@@ -29,6 +29,13 @@ set rtl_file_data [read $rtl_file_ref]
 close $rtl_file_ref
 set rtl_files [split $rtl_file_data "\n"]
 
+puts "INFO \[flow\] Reading the VHDL file list"
+set vhdl_file_list ./vhdl_files.lst
+set vhdl_file_ref  [open $vhdl_file_list r]
+set vhdl_file_data [read $vhdl_file_ref]
+close $vhdl_file_ref
+set vhdl_files [split $vhdl_file_data "\n"]
+
 puts "INFO \[flow\] Reading the RTL directories list"
 set rtl_dir_list ./rtl_dirs.lst
 set rtl_dir_ref  [open $rtl_dir_list r]
@@ -52,6 +59,18 @@ close $uvm_dir_ref
 # Building the testbench only
 # ------------------------------------------------------------------------------
 if { [expr $run_mode == 0] } {
+
+
+  if {[llength $vhdl_files]} {
+    puts "INFO \[flow\] VHDL files found"
+    set outfile [open "compile_list.txt" w];
+    foreach f $vhdl_files { puts $outfile "$f" }
+    close $outfile;
+    puts "INFO \[xvhdl\] Parsing the compile list"
+    exec xvhdl -f compile_list.txt
+  } else {
+    puts "INFO \[flow\] NO VHDL files found"
+  }
 
   set outfile [open "compile_list.txt" w];
 

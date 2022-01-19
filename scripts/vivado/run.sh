@@ -78,10 +78,11 @@ fi
 # ------------------------------------------------------------------------------
 echo "INFO [run_tools] Setting parameters"
 cd   $viv_dir
-echo $rtl_dirs  > rtl_dirs.lst
-echo $rtl_files > rtl_files.lst
-echo $uvm_files > uvm_files.lst
-echo $uvm_dirs  > uvm_dirs.lst
+echo $rtl_dirs   > rtl_dirs.lst
+echo $rtl_files  > rtl_files.lst
+echo $vhdl_files > vhdl_files.lst
+echo $uvm_files  > uvm_files.lst
+echo $uvm_dirs   > uvm_dirs.lst
 cp   $make_root/scripts/vivado/build_normal.tcl ./
 cp   $make_root/scripts/vivado/start_vivado_notrace.tcl ./
 cp   $make_root/scripts/vivado/timing_constraints.xdc ./
