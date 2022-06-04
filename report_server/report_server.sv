@@ -275,14 +275,14 @@ class report_server extends uvm_default_report_server;
     else if (sev_string == "UVM_WARNING") begin
 
       format_str        = $sformatf(fg_format[c_uvm_warning[0]], bg_format[c_uvm_warning[1]]);
-      severity_str      = "  UVM_VARNING";
+      severity_str      = "  UVM_WARNING";
       severity_str_fmtd = $sformatf(format_str, "UVM_WARNING");
 
     end
     else if (sev_string == "UVM_ERROR") begin
 
       format_str        = $sformatf(fg_format[c_uvm_error[0]], bg_format[c_uvm_error[1]]);
-      severity_str      = "  UVM_EROR";
+      severity_str      = "  UVM_ERROR";
       severity_str_fmtd = $sformatf({"  ", format_str}, "UVM_ERROR");
 
     end
@@ -520,5 +520,4 @@ class report_server extends uvm_default_report_server;
       `uvm_info(get_name(), $sformatf("Test (%s) PASS", _testname), UVM_LOW)
     end
   endfunction
-
 endclass
