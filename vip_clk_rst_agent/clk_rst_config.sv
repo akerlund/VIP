@@ -22,12 +22,13 @@
 
 class clk_rst_config extends uvm_object;
 
-  realtime clock_period = 10.0;
+  realtime clock_period      = 10.0;
+  logic    rst_event_enabled = '0;
 
   `uvm_object_utils_begin(clk_rst_config);
-    `uvm_field_real(clock_period, UVM_DEFAULT)
+  `uvm_field_real(clock_period,     UVM_DEFAULT)
+  `uvm_field_int(rst_event_enabled, UVM_DEFAULT)
   `uvm_object_utils_end;
-
 
   function new(string name = "clk_rst_config");
     super.new(name);

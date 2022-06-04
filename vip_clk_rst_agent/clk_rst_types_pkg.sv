@@ -22,18 +22,18 @@
 
 package clk_rst_types_pkg;
 
-  typedef enum {
+  typedef enum logic [1 : 0] {
     RESET_ASYNCHRONOUSLY_E,
     RESET_AT_CLK_RISING_EDGE_E,
     RESET_AT_CLK_FALLING_EDGE_E
   } reset_edge_t;
 
-  typedef enum bit {
+  typedef enum logic {
     RESET_INACTIVE_E,
     RESET_ACTIVE_E
   } reset_value_t;
 
-  typedef enum {
+  typedef enum logic {
     RESET_ACTIVE_LOW_E,
     RESET_ACTIVE_HIGH_E
   } reset_active_t;

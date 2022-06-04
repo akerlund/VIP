@@ -22,88 +22,102 @@
 
 class clk_rst_monitor extends uvm_monitor;
 
-  protected virtual clk_rst_if vif;
-
-  clk_rst_config cfg;
-  realtime       measured_reset_duration;
+  protected virtual clk_rst_if _vif;
+  protected realtime           _measured_reset_duration;
+  protected clk_rst_config     _cfg;
+  protected uvm_event          _rst_event;
 
   `uvm_component_utils(clk_rst_monitor);
 
-  uvm_analysis_port #(uvm_event) rst_watch_port;
-
-
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
   function new(string name, uvm_component parent);
-
     super.new(name, parent);
-
-    rst_watch_port = new("rst_watch_port", this);
-
   endfunction
 
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
+  function set_cfg(ref clk_rst_config cfg);
+    _cfg = cfg;
+  endfunction
 
-
-  virtual function void build_phase(uvm_phase phase);
-
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
+  function void build_phase(uvm_phase phase);
     super.build_phase(phase);
-
-    if (!uvm_config_db #(virtual clk_rst_if)::get(this, "", "vif", vif)) begin
-      `uvm_fatal("NOVIF", {"virtual interface must be set for: ", get_full_name(), ".vif"});
+    if (!uvm_config_db #(virtual clk_rst_if)::get(this, "", "vif", _vif)) begin
+      `uvm_fatal("NOVIF", {"FATAL [CLK] Virtual interface must be set for: ",
+      get_full_name(), ".vif"});
     end
-
   endfunction
 
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
+  function void start_of_simulation_phase(uvm_phase phase);
+    super.start_of_simulation_phase(phase);
+    if (_cfg.rst_event_enabled == '1) begin
+      _rst_event = new("EV_RST");
+    end
+  endfunction
 
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
+  task run_phase(uvm_phase phase);
 
-  virtual task run_phase(uvm_phase phase);
-
-    // Waiting half a period because the reset is "asserted" at delta-time 0, a kind
-    // of UVM DC component?
-    #(cfg.clock_period/2);
+    if ($realtime == 0) begin
+      // Waiting half a period because apparently the reset is "asserted" at
+      // delta-time 0 (a kind of UVM DC component?) which will trigger the
+      // Monitor to react falsely.
+      #(_cfg.clock_period/2);
+    end
 
     fork
       monitor_reset_assertions();
       monitor_reset_deassertions();
     join
-
   endtask
 
-
-
-  virtual protected task monitor_reset_assertions();
-
-    uvm_event rst_event;
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
+  protected task monitor_reset_assertions();
 
     forever begin
+      @(posedge _vif.rst);
 
-      @(posedge vif.rst);
-      `uvm_info(get_type_name(), "Reset asserted", UVM_LOW)
-      measured_reset_duration = $realtime;
-      rst_event = new("reset_asserted");
-      rst_watch_port.write(rst_event);
+      `uvm_info(get_name(), "INFO [CLK] Reset asserted", UVM_LOW)
+      _measured_reset_duration = $realtime;
 
+      if (_cfg.rst_event_enabled == '1) begin
+        _rst_event.trigger();
+      end
     end
-
   endtask
 
-
-
-  virtual protected task monitor_reset_deassertions();
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
+  protected task monitor_reset_deassertions();
 
     forever begin
 
-      @(negedge vif.rst);
-      `uvm_info(get_type_name(), "Reset de-asserted", UVM_LOW)
-      measured_reset_duration = $realtime - measured_reset_duration;
+      @(negedge _vif.rst);
 
-      if (measured_reset_duration < cfg.clock_period) begin
-        `uvm_info(get_type_name(), $sformatf("Reset period is lower than (1) clock period: (%f) < (%f)", measured_reset_duration, cfg.clock_period), UVM_LOW)
+      _measured_reset_duration = $realtime - _measured_reset_duration;
+      if (_measured_reset_duration < _cfg.clock_period) begin
+        `uvm_info(get_name(), $sformatf("INFO [CLK] Reset de-asserted: period is lower than (1) clock period: (%f) < (%f)",
+        _measured_reset_duration, _cfg.clock_period), UVM_LOW)
       end
       else begin
-        `uvm_info(get_type_name(), $sformatf("Reset (rst/rst_n) was active for (%.2f) clock periods", measured_reset_duration/cfg.clock_period), UVM_LOW)
+        `uvm_info(get_name(), $sformatf("INFO [CLK] Reset de-asserted: was active for (%.2f) clock periods",
+        (_measured_reset_duration / _cfg.clock_period)), UVM_LOW)
       end
-
     end
-
   endtask
 
 endclass

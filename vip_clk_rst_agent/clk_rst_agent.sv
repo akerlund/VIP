@@ -22,43 +22,48 @@
 
 class clk_rst_agent extends uvm_agent;
 
-  protected virtual clk_rst_if vif;
-  protected int     id;
-
-  clk_rst_config    cfg;
-  clk_rst_monitor   monitor;
-  clk_rst_driver    driver;
-  clk_rst_sequencer sequencer;
-
+  protected int               _id = 0;
+  protected string            _id_str;
+  protected clk_rst_config    _cfg;
+            clk_rst_monitor   monitor;
+            clk_rst_driver    driver;
+            clk_rst_sequencer sequencer;
 
   `uvm_component_utils_begin(clk_rst_agent);
-    `uvm_field_int(id,     UVM_DEFAULT)
-    `uvm_field_object(cfg, UVM_DEFAULT)
+  `uvm_field_int(_id,     UVM_DEFAULT)
+  `uvm_field_object(_cfg, UVM_DEFAULT)
   `uvm_component_utils_end;
 
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
   function new(string name, uvm_component parent);
     super.new(name, parent);
   endfunction
 
-
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
   virtual function void build_phase(uvm_phase phase);
 
     super.build_phase(phase);
 
-    if (!uvm_config_db #(clk_rst_config)::get(this, "", "cfg", cfg)) begin
-      `uvm_info(get_type_name(), "Agent has no config, creating a default config", UVM_LOW)
-      cfg = clk_rst_config::type_id::create("default_config", this);
+    if (!uvm_config_db #(clk_rst_config)::get(this, "", "cfg", _cfg)) begin
+      `uvm_info(get_type_name(), "INFO [CLK] Creating a default config", UVM_LOW)
+      _cfg = clk_rst_config::type_id::create("clk_default_config", this);
     end
 
-    monitor     = clk_rst_monitor::type_id::create("monitor", this);
-    driver      = clk_rst_driver::type_id::create("driver", this);
-    sequencer   = clk_rst_sequencer::type_id::create("sequencer", this);
-    monitor.cfg = cfg;
-    driver.cfg  = cfg;
-
+    _id_str.itoa(_id);
+    monitor     = clk_rst_monitor::type_id::create({"clk_rst_monitor",     _id_str}, this);
+    driver      = clk_rst_driver::type_id::create({"clk_rst_driver",       _id_str}, this);
+    sequencer   = clk_rst_sequencer::type_id::create({"clk_rst_sequencer", _id_str}, this);
+    monitor.set_cfg(_cfg);
+    driver.set_cfg(_cfg);
   endfunction
 
-
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
   function void connect_phase(uvm_phase phase);
     driver.seq_item_port.connect(sequencer.seq_item_export);
   endfunction

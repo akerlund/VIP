@@ -24,33 +24,41 @@ class reset_sequence extends uvm_sequence #(clk_rst_item);
 
   `uvm_object_utils(reset_sequence);
 
-  clk_rst_item clk_rst_item0;
-  realtime     reset_duration = 100.0;
+  protected realtime _rst_time;
 
-
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
   function new(string name = "reset_sequence");
     super.new(name);
+    _rst_time = 100.0;
   endfunction
 
+  // ---------------------------------------------------------------------------
+  // Sets the reset duration.
+  // ---------------------------------------------------------------------------
+  function void set_rst_time(input realtime rst_time);
+    _rst_time = rst_time;
+  endfunction
 
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
+  task body();
 
-  virtual task body();
+    req = new("item");
 
-    clk_rst_item0 = new("item");
-
-    clk_rst_item0.reset_edge  = RESET_ASYNCHRONOUSLY_E;
-    clk_rst_item0.reset_value = RESET_ACTIVE_E;
-
-    req = clk_rst_item0;
+    // Enable reset
+    req.reset_edge  = RESET_ASYNCHRONOUSLY_E;
+    req.reset_value = RESET_ACTIVE_E;
     start_item(req);
     finish_item(req);
 
-    #reset_duration;
+    #_rst_time;
 
-    clk_rst_item0.reset_edge  = RESET_AT_CLK_RISING_EDGE_E;
-    clk_rst_item0.reset_value = RESET_INACTIVE_E;
-
-    req = clk_rst_item0;
+    // Disable reset
+    req.reset_edge  = RESET_AT_CLK_RISING_EDGE_E;
+    req.reset_value = RESET_INACTIVE_E;
     start_item(req);
     finish_item(req);
 
