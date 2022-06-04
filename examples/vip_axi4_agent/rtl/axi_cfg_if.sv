@@ -28,6 +28,7 @@ interface axi_cfg_if #(
   )(input logic clk, input logic rst_n);
 
   // Write Address Channel
+  logic   [AXI4_ID_WIDTH_P-1 : 0] awid;
   logic [AXI4_ADDR_WIDTH_P-1 : 0] awaddr;
   logic                           awvalid;
   logic                           awready;
@@ -40,11 +41,13 @@ interface axi_cfg_if #(
   logic                           wready;
 
   // Write Response Channel
+  logic   [AXI4_ID_WIDTH_P-1 : 0] bid;
   logic                   [1 : 0] bresp;
   logic                           bvalid;
   logic                           bready;
 
   // Read Address Channel
+  logic   [AXI4_ID_WIDTH_P-1 : 0] arid;
   logic [AXI4_ADDR_WIDTH_P-1 : 0] araddr;
   logic                   [7 : 0] arlen;
   logic                           arvalid;
@@ -65,6 +68,7 @@ interface axi_cfg_if #(
     input  rst_n,
 
     // Write Address Channel
+    output awid,
     output awaddr,
     output awvalid,
     input  awready,
@@ -77,11 +81,13 @@ interface axi_cfg_if #(
     input  wready,
 
     // Write Response Channel
+    input  bid,
     input  bresp,
     input  bvalid,
     output bready,
 
     // Read Address Channel
+    output arid,
     output araddr,
     output arlen,
     output arvalid,
@@ -103,6 +109,7 @@ interface axi_cfg_if #(
     input  rst_n,
 
     // Write Address Channel
+    input  awid,
     input  awaddr,
     input  awvalid,
     output awready,
@@ -115,11 +122,13 @@ interface axi_cfg_if #(
     output wready,
 
     // Write Response Channel
+    output bid,
     output bresp,
     output bvalid,
     input  bready,
 
     // Read Address Channel
+    input  arid,
     input  araddr,
     input  arlen,
     input  arvalid,

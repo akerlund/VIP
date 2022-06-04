@@ -113,6 +113,7 @@ module axi4_tb_top;
   //----------------------------------------------------------------------------
 
   // Write Address Channel
+  assign cfg_vif.awid     = reg_vif.awid;
   assign cfg_vif.awaddr   = reg_vif.awaddr;
   assign cfg_vif.awvalid  = reg_vif.awvalid;
   assign reg_vif.awready  = cfg_vif.awready;
@@ -125,17 +126,20 @@ module axi4_tb_top;
   assign reg_vif.wready   = cfg_vif.wready;
 
   // Write Response Channel
+  assign reg_vif.bid      = cfg_vif.bid;
   assign reg_vif.bresp    = cfg_vif.bresp;
   assign reg_vif.bvalid   = cfg_vif.bvalid;
   assign cfg_vif.bready   = reg_vif.bready;
 
   // Read Address Channel
+  assign cfg_vif.arid     = reg_vif.arid;
   assign cfg_vif.araddr   = reg_vif.araddr;
   assign cfg_vif.arlen    = reg_vif.arlen;
   assign cfg_vif.arvalid  = reg_vif.arvalid;
   assign reg_vif.arready  = cfg_vif.arready;
 
   // Read Data Channel
+  assign reg_vif.rid      = cfg_vif.rid;
   assign reg_vif.rdata    = cfg_vif.rdata;
   assign reg_vif.rresp    = cfg_vif.rresp;
   assign reg_vif.rlast    = cfg_vif.rlast;

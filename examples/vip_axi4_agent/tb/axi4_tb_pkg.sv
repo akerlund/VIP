@@ -33,7 +33,7 @@ package axi4_tb_pkg;
 
   localparam int AXI4_ID_WIDTH_C   = 11;
   localparam int AXI4_ADDR_WIDTH_C = 16;
-  localparam int AXI4_DATA_WIDTH_C = 32;
+  localparam int AXI4_DATA_WIDTH_C = 64;
   localparam int AXI4_STRB_WIDTH_C = AXI4_DATA_WIDTH_C/8;
 
   // Configuration of the VIP (Data)

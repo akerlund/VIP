@@ -65,7 +65,10 @@ module axi4_axi_slave #(
   read_state_t read_state;
 
   logic [AXI_ADDR_WIDTH_P-1 : 0] araddr_r0;
+  logic                  [7 : 0] arlen_c0;
   logic                  [7 : 0] arlen_r0;
+  logic [AXI_DATA_WIDTH_P-1 : 0] rdata_c0;
+  logic                  [1 : 0] rresp_c0;
 
 
 
@@ -85,6 +88,7 @@ module axi4_axi_slave #(
       awaddr_r0   <= '0;
       cif.awready <= '0;
       cif.wready  <= '0;
+      cif.bid     <= '0;
       cif.bvalid  <= '0;
       cif.bresp   <= '0;
       cmd_command      <= 0;
@@ -107,9 +111,10 @@ module axi4_axi_slave #(
 
           cif.awready <= '1;
 
-          if (cif.awvalid) begin
+          if (cif.awvalid && cif.awready) begin
             write_state <= WAIT_MST_WLAST_E;
             cif.awready <= '0;
+            cif.bid     <= cif.awid;
             awaddr_r0   <= cif.awaddr;
             cif.wready  <= '1;
           end
@@ -170,7 +175,27 @@ module axi4_axi_slave #(
   // Read process
   // ---------------------------------------------------------------------------
 
-  assign cif.rlast = (arlen_r0 == '0);
+  assign cif.rlast = cif.rvalid && arlen_r0 == '0;
+
+  always_comb begin
+    arlen_c0 = arlen_r0;
+
+    case (read_state)
+      WAIT_MST_ARVALID_E: begin
+        if (cif.arvalid && cif.arready) begin
+          arlen_c0 = cif.arlen;
+        end
+      end
+
+      WAIT_SLV_RLAST_E: begin
+        if (cif.rready && cif.rvalid) begin
+          if (arlen_r0 != '0) begin
+            arlen_c0 = arlen_r0 - 1;
+          end
+        end
+      end
+    endcase
+  end
 
   // FSM
   always_ff @(posedge cif.clk or negedge cif.rst_n) begin
@@ -180,6 +205,9 @@ module axi4_axi_slave #(
       cif.arready <= '0;
       araddr_r0   <= '0;
       arlen_r0    <= '0;
+      cif.rid     <= '0;
+      cif.rdata   <= '0;
+      cif.rresp   <= '0;
       cif.rvalid  <= '0;
 
     end
@@ -195,31 +223,29 @@ module axi4_axi_slave #(
 
           cif.arready <= '1;
 
-          if (cif.arvalid) begin
+          if (cif.arvalid && cif.arready) begin
             read_state  <= WAIT_SLV_RLAST_E;
             araddr_r0   <= cif.araddr;
-            arlen_r0    <= cif.arlen;
+            cif.rid     <= cif.arid;
             cif.arready <= '0;
-            cif.rvalid  <= '1;
           end
 
         end
 
         WAIT_SLV_RLAST_E: begin
 
+          cif.rvalid <= '1;
+          cif.rdata  <= rdata_c0;
+          cif.rresp  <= rresp_c0;
 
-          if (cif.rready) begin
+          if (cif.rready && cif.rvalid) begin
             araddr_r0 <= araddr_r0 + (AXI_DATA_WIDTH_P/8);
           end
 
-          if (cif.rlast && cif.rready) begin
+          if (cif.rvalid && cif.rready && cif.rlast) begin
             read_state  <= WAIT_MST_ARVALID_E;
             cif.arready <= '1;
             cif.rvalid  <= '0;
-          end
-
-          if (arlen_r0 != '0) begin
-            arlen_r0 <= arlen_r0 - 1;
           end
 
         end
@@ -228,26 +254,25 @@ module axi4_axi_slave #(
   end
 
 
+
   always_comb begin
 
-    cif.rdata = '0;
-    cif.rresp = '0;
-
+    rdata_c0 = '0;
+    rresp_c0 = '0;
 
     case (araddr_r0)
 
       CONFIGURATION_ADDR: begin
-        cif.rdata[63 : 0] = cr_configuration;
+        rdata_c0 = cr_configuration;
       end
 
       STATUS_ADDR: begin
-        cif.rdata[63 : 0] = sr_status;
+        rdata_c0 = sr_status;
       end
 
-
       default: begin
-        cif.rresp = AXI_RESP_SLVERR_C;
-        cif.rdata = '0;
+        rresp_c0 = AXI_RESP_SLVERR_C;
+        rdata_c0 = '0;
       end
 
     endcase
