@@ -191,7 +191,7 @@ class vip_axi4_driver #(
   // ---------------------------------------------------------------------------
   protected task reset_vif();
 
-    `uvm_info(get_name(), "INFO [AXI4] VIF Reset", UVM_LOW)
+    `uvm_info(get_name(), "INFO [AXI4] VIF Reset", UVM_HIGH)
     if (cfg.vip_axi4_agent_type == VIP_AXI4_MASTER_AGENT_E) begin
 
       // Write Address Channel
