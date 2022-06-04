@@ -31,9 +31,9 @@ package vip_mem_types_pkg;
   } vip_mem_cfg_t;
 
   typedef enum {
-    VIP_MEM_X_WR_IGNORE_E,
-    VIP_MEM_X_WR_WARNING_E,
-    VIP_MEM_X_WR_FATAL_E
+    VIP_MEM_X_IGNORE_E,
+    VIP_MEM_X_WARNING_E,
+    VIP_MEM_X_FATAL_E
   } vip_mem_x_severity_t;
 
 endpackage

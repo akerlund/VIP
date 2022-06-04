@@ -25,13 +25,17 @@ class vip_mem #(
   vip_mem_cfg_t MEM_P = '{default: '0}
  ) extends uvm_object;
 
-  typedef logic   [MEM_P.ADDR_WIDTH_P-1 : 0] mem_addr_type_t;
+  typedef logic [MEM_P.ADDR_WIDTH_P-1 : 0]   mem_addr_type_t;
   typedef logic [MEM_P.DATA_BYTES_P*8-1 : 0] mem_get_type_t [mem_addr_type_t];
 
   // Memory
   protected logic [MEM_P.DATA_BYTES_P*8-1 : 0] _memory [mem_addr_type_t];
   protected longint                            _memory_depth;
-  protected vip_mem_x_severity_t               _mem_x_severity = VIP_MEM_X_WR_IGNORE_E;
+  protected vip_mem_x_severity_t               _wr_x_severity = VIP_MEM_X_IGNORE_E;
+  protected vip_mem_x_severity_t               _rd_x_severity = VIP_MEM_X_IGNORE_E;
+
+  // Settings
+  protected bool_t _rd_x_responses = FALSE;
 
   // ---------------------------------------------------------------------------
   //
@@ -50,29 +54,24 @@ class vip_mem #(
   // ---------------------------------------------------------------------------
   // This function will set all data
   // ---------------------------------------------------------------------------
-  function void set(logic [MEM_P.DATA_BYTES_P*8-1 : 0] memory [mem_addr_type_t]);
+  function void set(
+      input logic [MEM_P.DATA_BYTES_P*8-1 : 0] memory [mem_addr_type_t]
+    );
     _memory.delete();
     _memory = memory;
   endfunction
 
   // ---------------------------------------------------------------------------
-  // This function will get all data
-  // ---------------------------------------------------------------------------
-  function mem_get_type_t get();
-    get = _memory;
-  endfunction
-
-  // ---------------------------------------------------------------------------
   // Set the depth of the memory
   // ---------------------------------------------------------------------------
-  function void set_depth(int memory_depth);
+  function void set_depth(input longint memory_depth);
     _memory_depth = memory_depth;
   endfunction
 
   // ---------------------------------------------------------------------------
   // Set the depth of the memory as a function of an highest address
   // ---------------------------------------------------------------------------
-  function void set_addr_width(int addr_width);
+  function void set_addr_width(input longint addr_width);
     _memory_depth = 2**(addr_width - $clog2(MEM_P.DATA_BYTES_P));
     if (_memory_depth == 0 || addr_width == 0) begin
       `uvm_fatal(get_name(), $sformatf("[MEM] The memory depth was calculated to (%0d)", _memory_depth))
@@ -80,11 +79,41 @@ class vip_mem #(
   endfunction
 
   // ---------------------------------------------------------------------------
+  // Sets the severity level of writing X
+  // ---------------------------------------------------------------------------
+  function void set_wr_x_severity(input vip_mem_x_severity_t wr_x_severity);
+    _wr_x_severity = wr_x_severity;
+  endfunction
+
+  // ---------------------------------------------------------------------------
+  // Controls if the memory will responds with X if the address is previously
+  // not written to.
+  // ---------------------------------------------------------------------------
+  function void set_rd_x_responses(input bool_t rd_x_responses);
+    _rd_x_responses = rd_x_responses;
+  endfunction
+
+  // ---------------------------------------------------------------------------
+  // Sets the severity level of reading X
+  // ---------------------------------------------------------------------------
+  function void set_rd_x_severity(input vip_mem_x_severity_t rd_x_severity);
+    _rd_x_severity = rd_x_severity;
+  endfunction
+
+  // ---------------------------------------------------------------------------
+  // This function will get all data
+  // ---------------------------------------------------------------------------
+  function mem_get_type_t get();
+    return _memory;
+  endfunction
+
+  // ---------------------------------------------------------------------------
   // This function will randomize all data in the memory
   // ---------------------------------------------------------------------------
   function void randomize_memory();
     logic [MEM_P.DATA_BYTES_P*8-1 : 0] _r;
-    for (int i = 0; i < (2**_memory_depth) / MEM_P.DATA_BYTES_P; i++) begin
+    `uvm_info(get_name(), $sformatf("INFO [MEM] Randomizing (%0d) memory entries", _memory_depth), UVM_LOW)
+    for (longint i = 0; i < _memory_depth; i++) begin
       void'(std::randomize(_r));
       _memory[i] = _r;
     end
@@ -94,15 +123,15 @@ class vip_mem #(
   // Write an array of data (data) to the memory starting at some address (addr)
   // ---------------------------------------------------------------------------
   function void wr(
-      logic   [MEM_P.ADDR_WIDTH_P-1 : 0] addr,
-      logic [MEM_P.DATA_BYTES_P*8-1 : 0] data [$]
+      input logic   [MEM_P.ADDR_WIDTH_P-1 : 0] addr,
+      input logic [MEM_P.DATA_BYTES_P*8-1 : 0] data [$]
     );
 
-    int memory_start_index = unsigned'(addr) / MEM_P.DATA_BYTES_P;
-    int memory_stop_index  = memory_start_index + data.size() - 1;
+    longint memory_start_index = unsigned'(addr) / MEM_P.DATA_BYTES_P;
+    longint memory_stop_index  = memory_start_index + data.size() - 1;
 
     if (memory_start_index > (_memory_depth-1) || memory_stop_index > _memory_depth) begin
-      `uvm_fatal(get_name(), $sformatf("[MEM] Memory range undefined (%0d - %0d) > (%0d)",
+      `uvm_fatal(get_name(), $sformatf("FATAL [MEM] Memory range undefined (%0d - %0d) > (%0d)",
         memory_start_index, memory_stop_index, _memory_depth))
     end
 
@@ -116,39 +145,39 @@ class vip_mem #(
   // Write a VIP AXI4 item
   // ---------------------------------------------------------------------------
   function void wr_axi4(
-      logic   [MEM_P.ADDR_WIDTH_P-1 : 0] awaddr,
-      logic                      [7 : 0] awlen,
-      logic [MEM_P.DATA_BYTES_P*8-1 : 0] wdata [],
-      logic   [MEM_P.DATA_BYTES_P-1 : 0] wstrb []
+      input logic   [MEM_P.ADDR_WIDTH_P-1 : 0] awaddr,
+      input logic                      [7 : 0] awlen,
+      input logic [MEM_P.DATA_BYTES_P*8-1 : 0] wdata [],
+      input logic   [MEM_P.DATA_BYTES_P-1 : 0] wstrb []
     );
 
     logic [MEM_P.DATA_BYTES_P*8-1 : 0] write_row;
 
-    int memory_start_index = 0;
-    int write_range        = 0;
-    int memory_stop_index  = 0;
-    int write_counter      = 0;
+    longint memory_start_index = 0;
+    longint write_range        = 0;
+    longint memory_stop_index  = 0;
+    longint write_counter      = 0;
 
     memory_start_index = unsigned'(awaddr) / MEM_P.DATA_BYTES_P;
     write_range        = unsigned'(awlen) + 1;
     memory_stop_index  = memory_start_index + write_range;
 
     if (memory_start_index > (_memory_depth-1) || memory_stop_index > _memory_depth) begin
-      `uvm_fatal(get_name(), $sformatf("[MEM] Memory range undefined (%0d - %0d) > (%0d)", memory_start_index, memory_stop_index, _memory_depth))
+      `uvm_fatal(get_name(), $sformatf("FATAL [MEM] Memory range undefined (%0d - %0d) > (%0d)", memory_start_index, memory_stop_index, _memory_depth))
     end
 
     // Writing the data to memory
     write_counter = 0;
-    for (int i = memory_start_index; i < memory_stop_index; i++) begin
+    for (longint i = memory_start_index; i < memory_stop_index; i++) begin
 
       if (wstrb[write_counter] === '1) begin
 
-        if (_mem_x_severity != VIP_MEM_X_WR_IGNORE_E) begin
+        if (_wr_x_severity != VIP_MEM_X_IGNORE_E) begin
           if (^wdata[write_counter] === 1'bX) begin
-            if (_mem_x_severity == VIP_MEM_X_WR_WARNING_E) begin
-              `uvm_warning(get_name(), $sformatf("[MEM] Writing X to index (%0d), address = (%h)", memory_start_index, awaddr))
+            if (_wr_x_severity == VIP_MEM_X_WARNING_E) begin
+              `uvm_warning(get_name(), $sformatf("WARNING [MEM] Writing X to index (%0d), address = (%h)", memory_start_index, awaddr))
             end else begin
-              `uvm_fatal(get_name(), $sformatf("[MEM] Writing X to index (%0d), address = (%h)", memory_start_index, awaddr))
+              `uvm_fatal(get_name(), $sformatf("FATAL [MEM] Writing X to index (%0d), address = (%h)", memory_start_index, awaddr))
             end
           end
         end
@@ -161,16 +190,16 @@ class vip_mem #(
         // Only writing bytes that have 'wstrb' high
         write_row = '0;
 
-        for (int s = 0; s < MEM_P.DATA_BYTES_P; s++) begin
+        for (longint s = 0; s < MEM_P.DATA_BYTES_P; s++) begin
 
           if (wstrb[write_counter][s]) begin
 
-            if (_mem_x_severity != VIP_MEM_X_WR_IGNORE_E) begin
+            if (_wr_x_severity != VIP_MEM_X_IGNORE_E) begin
               if (^wdata[write_counter][8*s +: 8] === 1'bX) begin
-                if (_mem_x_severity == VIP_MEM_X_WR_WARNING_E) begin
-                  `uvm_warning(get_name(), $sformatf("[MEM] Writing X to index (%0d), address = (%h), byte = (%0d)", memory_start_index, awaddr, s))
+                if (_wr_x_severity == VIP_MEM_X_WARNING_E) begin
+                  `uvm_warning(get_name(), $sformatf("WARNING [MEM] Writing X to index (%0d), address = (%h), byte = (%0d)", memory_start_index, awaddr, s))
                 end else begin
-                  `uvm_fatal(get_name(), $sformatf("[MEM] Writing X to index (%0d), address = (%h), byte = (%0d)", memory_start_index, awaddr, s))
+                  `uvm_fatal(get_name(), $sformatf("FATAL [MEM] Writing X to index (%0d), address = (%h), byte = (%0d)", memory_start_index, awaddr, s))
                 end
               end
             end
@@ -201,9 +230,15 @@ class vip_mem #(
   // ---------------------------------------------------------------------------
   // This function returns data from an index in the memory array
   // ---------------------------------------------------------------------------
-  function logic [MEM_P.DATA_BYTES_P*8-1 : 0] rd_index(int index);
+  function logic [MEM_P.DATA_BYTES_P*8-1 : 0] rd_index(input longint index);
     if (!_memory.exists(index)) begin
-      rd_index = '0;
+      if (_rd_x_responses == TRUE) begin
+        rd_index = 'x;
+        print_x_read(index);
+      end
+      else begin
+        rd_index = '0;
+      end
     end else begin
       rd_index = _memory[index];
     end
@@ -212,18 +247,41 @@ class vip_mem #(
   // ---------------------------------------------------------------------------
   // This function returns data from an address in the memory array
   // ---------------------------------------------------------------------------
-  function logic [MEM_P.DATA_BYTES_P*8-1 : 0] rd_addr(longint addr);
+  function logic [MEM_P.DATA_BYTES_P*8-1 : 0] rd_addr(input longint addr);
 
-    int read_index = unsigned'(addr) / MEM_P.DATA_BYTES_P;
+    longint read_index = unsigned'(addr) / MEM_P.DATA_BYTES_P;
 
     if (read_index > (_memory_depth-1)) begin
-      `uvm_fatal(get_name(), $sformatf("MEM: Memory range undefined (%0d)", read_index))
+      `uvm_fatal(get_name(), $sformatf("FATAL [MEM] Memory range undefined (%0d)", read_index))
     end
 
     if (!_memory.exists(read_index)) begin
-      rd_addr = '0;
+      if (_rd_x_responses == TRUE) begin
+        rd_addr = 'x;
+        print_x_read(read_index);
+      end
+      else begin
+        rd_addr = '0;
+      end
     end else begin
       rd_addr = _memory[read_index];
+    end
+  endfunction
+
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
+  protected function void print_x_read(input longint index);
+
+    longint addr;
+
+    if (_rd_x_severity == VIP_MEM_X_WARNING_E) begin
+      addr = MEM_P.DATA_BYTES_P * index;
+      `uvm_warning(get_name(), $sformatf("WARNING [MEM] Reading X from index (%0d), address = (%h)", index, addr))
+    end
+    else if (_rd_x_severity == VIP_MEM_X_FATAL_E) begin
+      addr = MEM_P.DATA_BYTES_P * index;
+      `uvm_fatal(get_name(), $sformatf("FATAL [MEM] Reading X from index (%0d), address = (%h)", index, addr))
     end
   endfunction
 

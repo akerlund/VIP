@@ -28,6 +28,7 @@ package vip_memory_pkg;
   `include "uvm_macros.svh"
   import uvm_pkg::*;
 
+  import bool_pkg::*;
   import vip_mem_types_pkg::*;
 
   `include "vip_mem.sv"
