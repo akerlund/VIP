@@ -35,6 +35,8 @@ set vhdl_file_ref  [open $vhdl_file_list r]
 set vhdl_file_data [read $vhdl_file_ref]
 close $vhdl_file_ref
 set vhdl_files [split $vhdl_file_data "\n"]
+# Remove empty entries
+set vhdl_files [lsearch -all -inline -not -exact $vhdl_files {}]
 
 puts "INFO \[flow\] Reading the RTL directories list"
 set rtl_dir_list ./rtl_dirs.lst
