@@ -93,8 +93,9 @@ class vip_axi4_adapter #(
 
     vip_axi4_item #(CFG_P) reg_item;
 
-    assert ($cast(reg_item, bus_item)) else
-      `uvm_fatal(get_name(), "Cannot cast to vip_axi4_item")
+    if (!$cast(reg_item, bus_item)) begin
+      `uvm_fatal(get_name(), "FATAL [AXI4] Cannot cast to vip_axi4_item")
+    end
 
     rw.addr   = reg_item.araddr;
     rw.kind   = UVM_READ;

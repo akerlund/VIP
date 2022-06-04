@@ -55,11 +55,11 @@ class vip_axi4_agent #(
     super.build_phase(phase);
 
     if (!uvm_config_db #(virtual vip_axi4_if #(CFG_P))::get(this, "", "vif", vif)) begin
-      `uvm_fatal("NOVIF", {"Virtual interface must be set for: ", get_full_name(), ".vif"});
+      `uvm_fatal("NOVIF", {"FATAL [AXI4] Virtual interface must be set for: ", get_full_name(), ".vif"});
     end
 
     if (!uvm_config_db #(vip_axi4_config)::get(this, "", "cfg", cfg)) begin
-      `uvm_info(get_name(), "Agent has no config, creating a default config", UVM_LOW)
+      `uvm_info(get_name(), "INFO [AXI4] Agent has no config, creating a default config", UVM_LOW)
       cfg = vip_axi4_config::type_id::create("default_config", this);
     end
 
@@ -91,6 +91,8 @@ class vip_axi4_agent #(
     end
 
     if (cfg.vip_axi4_agent_type == VIP_AXI4_MASTER_AGENT_E && cfg.is_active == UVM_ACTIVE) begin
+      driver.wr_request_port.connect(monitor.wr_request_fifo.analysis_export);
+      monitor.wr_response_port.connect(driver.wr_response_fifo.analysis_export);
       driver.rd_request_port.connect(monitor.rd_request_fifo.analysis_export);
       monitor.rd_response_port.connect(driver.rd_response_fifo.analysis_export);
     end
@@ -102,7 +104,7 @@ class vip_axi4_agent #(
   virtual task run_phase(uvm_phase phase);
     forever begin
       @(negedge vif.rst_n);
-      `uvm_info(get_name(), $sformatf("[rst_n] Calling reset handler"), UVM_LOW)
+      `uvm_info(get_name(), $sformatf("INFO [AXI4] Calling reset handler"), UVM_LOW)
       passive_reset('0);
       handle_reset(phase);
       @(posedge vif.rst_n);
@@ -164,7 +166,7 @@ class vip_axi4_agent #(
   // ---------------------------------------------------------------------------
   // This function returns data for an index in the memory array
   // ---------------------------------------------------------------------------
-  function logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] memory_read_index(int index);
+  function logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] memory_read_index(longint index);
     return driver.memory_read_index(index);
   endfunction
 

@@ -117,23 +117,38 @@ class vip_axi4_item #(
   vip_axi4_item                    #(CFG_P) req_queue [$];
   logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] custom_data [$];
 
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
   function new(string name = "vip_axi4_item");
     super.new(name);
   endfunction
 
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
   function void print_config();
     `uvm_info(get_name(), {"VIP AXI4 item config:\n", cfg.sprint()}, UVM_LOW)
   endfunction
 
-  function void set_config(vip_axi4_item_config _icfg);
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
+  function void set_config(input vip_axi4_item_config _icfg);
     cfg = _icfg;
   endfunction
 
-  function void set_counter_start(logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] start);
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
+  function void set_counter_start(input logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] start);
     cfg.counter_data = start;
   endfunction
 
-  function void set_custom_data(logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] data [$]);
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
+  function void set_custom_data(input logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] data [$]);
     custom_data = data;
   endfunction
 
@@ -144,12 +159,12 @@ class vip_axi4_item #(
   function void pre_randomize();
 
     if (cfg == null && (!uvm_config_db #(vip_axi4_item_config)::get(null, "*", "default_axi4_item_config", cfg))) begin
-      `uvm_fatal("NOCFG", "AXI4 Item has no config")
+      `uvm_fatal("NOCFG", "FATAL [AXI4] AXI4 Item has no config")
     end
 
     if (cfg.enable_boundary == TRUE) begin
       if ($countones(cfg.addr_boundary) != 1 && cfg.addr_boundary != '0) begin
-        `uvm_fatal(get_name(), "An address boundary must be a power of two")
+        `uvm_fatal(get_name(), "FATAL [AXI4] An address boundary must be a power of two")
       end
     end
 

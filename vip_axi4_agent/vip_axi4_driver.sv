@@ -25,6 +25,7 @@ class vip_axi4_driver #(
   ) extends uvm_driver #(vip_axi4_item #(CFG_P));
 
   typedef logic [CFG_P.VIP_AXI4_ADDR_WIDTH_P-1 : 0] mem_addr_type_t;
+  typedef logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] mem_get_type_t [mem_addr_type_t];
 
   localparam vip_mem_cfg_t MEM_C = {
     ADDR_WIDTH_P : CFG_P.VIP_AXI4_ADDR_WIDTH_P,
@@ -32,8 +33,11 @@ class vip_axi4_driver #(
   };
 
   // Analysis FIFOs connected to the monitor's analysis ports
+  uvm_analysis_port     #(vip_axi4_item #(CFG_P)) wr_request_port;
+  uvm_tlm_analysis_fifo #(vip_axi4_item #(CFG_P)) wr_response_fifo;
   uvm_analysis_port     #(vip_axi4_item #(CFG_P)) rd_request_port;
   uvm_tlm_analysis_fifo #(vip_axi4_item #(CFG_P)) rd_response_fifo;
+  protected int                                   _requested_wr_responses;
 
   // Callback
   `uvm_register_cb(vip_axi4_driver #(CFG_P), vip_axi4_driver_callback)
@@ -70,6 +74,8 @@ class vip_axi4_driver #(
   // ---------------------------------------------------------------------------
   function new (string name, uvm_component parent);
     super.new(name, parent);
+    wr_request_port  = new("wr_request_port", this);
+    wr_response_fifo = new("wr_response_fifo", this);
     rd_request_port  = new("rd_request_port", this);
     rd_response_fifo = new("rd_response_fifo", this);
   endfunction
@@ -86,7 +92,7 @@ class vip_axi4_driver #(
     end
 
     if (!uvm_config_db #(virtual vip_axi4_if #(CFG_P))::get(this, "", "vif", vif)) begin
-      `uvm_fatal("NOVIF", {"Virtual interface must be set for: ", get_full_name(), ".vif"});
+      `uvm_fatal("NOVIF", {"FATAL [AXI4] Virtual interface must be set for: ", get_full_name(), ".vif"});
     end
 
     if (cfg.vip_axi4_agent_type == VIP_AXI4_SLAVE_AGENT_E && cfg.mem_slave == TRUE) begin
@@ -107,9 +113,12 @@ class vip_axi4_driver #(
       if (cfg.mem_addr_width != 0) begin
         _memory_depth = 2**(cfg.mem_addr_width-$clog2(CFG_P.VIP_AXI4_STRB_WIDTH_P));
         if (_memory_depth == 0) begin
-          `uvm_fatal("RANGE", $sformatf("The memory depth was calculated to (%0d)", _memory_depth))
+          `uvm_fatal("RANGE", $sformatf("FATAL [AXI4] The memory depth was calculated to (%0d)", _memory_depth))
         end
         _mem.set_depth(_memory_depth);
+        _mem.set_wr_x_severity(cfg.mem_x_wr_severity);
+        _mem.set_rd_x_responses(cfg.mem_rd_x_responses);
+        _mem.set_rd_x_severity(cfg.mem_x_rd_severity);
       end
     end
   endfunction
@@ -169,6 +178,7 @@ class vip_axi4_driver #(
     _wdata_queue.delete();
     _rdata_active = FALSE;
     rd_response_fifo.flush();
+    _requested_wr_responses = 0;
     if (cfg.vip_axi4_agent_type == VIP_AXI4_SLAVE_AGENT_E && cfg.mem_slave == TRUE) begin
       _ev_monitor_wdata.reset();
       _ev_monitor_araddr.reset();
@@ -181,7 +191,7 @@ class vip_axi4_driver #(
   // ---------------------------------------------------------------------------
   protected task reset_vif();
 
-    `uvm_info(get_name(), "VIF Reset", UVM_LOW)
+    `uvm_info(get_name(), "INFO [AXI4] VIF Reset", UVM_LOW)
     if (cfg.vip_axi4_agent_type == VIP_AXI4_MASTER_AGENT_E) begin
 
       // Write Address Channel
@@ -265,7 +275,7 @@ class vip_axi4_driver #(
       seq_item_port.get_next_item(req);
 
       if (req == null) begin
-        `uvm_fatal(get_name(), "get_next_item() returned NULL");
+        `uvm_fatal(get_name(), "FATAL [AXI4] get_next_item() returned NULL");
       end
 
       if (req.cfg.axi4_access == VIP_AXI4_WR_REQUEST_E) begin
@@ -273,7 +283,7 @@ class vip_axi4_driver #(
       end else if (req.cfg.axi4_access == VIP_AXI4_RD_REQUEST_E) begin
         drive_araddr();
       end else begin
-        `uvm_fatal(get_name(), "Invalid item type");
+        `uvm_fatal(get_name(), "FATAL [AXI4] Invalid item type");
       end
 
       seq_item_port.item_done();
@@ -290,11 +300,12 @@ class vip_axi4_driver #(
       seq_item_port.get_next_item(req);
 
       if (req == null) begin
-        `uvm_fatal(get_name(), "get_next_item() returned NULL");
+        `uvm_fatal(get_name(), "FATAL [AXI4] get_next_item() returned NULL");
       end
 
       if (req.cfg.axi4_access != VIP_AXI4_RD_RESPONSE_E) begin
-        `uvm_fatal(get_name(), $sformatf("Invalid item type (%s)", req.cfg.axi4_access.name()))
+        `uvm_fatal(get_name(), $sformatf("FATAL [AXI4] Invalid item type (%s)",
+        req.cfg.axi4_access.name()))
       end
 
       drive_rdata();
@@ -334,6 +345,12 @@ class vip_axi4_driver #(
     end
 
     for (int i = 0; i < _req_queue.size(); i++) begin
+
+      if (_req_queue[i].cfg.get_wr_response == TRUE) begin
+        wr_request_port.write(_req_queue[i]);
+        _requested_wr_responses++;
+      end
+
       vif.awid     <= _req_queue[i].awid;
       vif.awaddr   <= _req_queue[i].awaddr;
       vif.awlen    <= _req_queue[i].awlen;
@@ -345,6 +362,7 @@ class vip_axi4_driver #(
       vif.awqos    <= _req_queue[i].awqos;
       vif.awregion <= _req_queue[i].awregion;
       vif.awuser   <= _req_queue[i].awuser;
+
       @(posedge vif.clk);
       while (!(vif.awvalid === '1 && vif.awready === '1)) begin
         @(posedge vif.clk);
@@ -371,6 +389,9 @@ class vip_axi4_driver #(
     vip_axi4_item #(CFG_P) _req_queue [$];
     int beat_counter;
     int burst_length;
+    vip_axi4_item #(CFG_P) _response;
+    int requested_responses = 0;
+    int received_responses  = 0;
     _req_queue = req.req_queue;
     _req_queue.push_front(req);
 
@@ -426,8 +447,33 @@ class vip_axi4_driver #(
       end
       vif.bready <= '0;
 
+      if (req.cfg.get_wr_response == TRUE) begin
+
+        while (received_responses != _requested_wr_responses) begin
+
+          while (wr_response_fifo.is_empty()) begin
+            @(posedge vif.clk);
+          end
+
+          wr_response_fifo.get(_response);
+          if (_response == null) begin `uvm_fatal(get_name(), $sformatf("FATAL [AXI4] NULL response from the Monitor")) end
+
+          if (received_responses == 0) begin
+            rsp = _response;
+            rsp.set_id_info(req);
+          end
+          else begin
+            rsp.req_queue.push_back(_response);
+          end
+          received_responses++;
+          `uvm_info(get_name(), $sformatf("INFO [AXI4] Write response"), UVM_LOW)
+        end
+      end
     end
 
+    if (req.cfg.get_wr_response == TRUE) begin
+      seq_item_port.put(rsp);
+    end
     _req_queue.delete();
     vif.wvalid <= '0;
 
@@ -455,7 +501,7 @@ class vip_axi4_driver #(
         clock_counter        = 0;
         awvalid_delay_time   = $urandom_range(cfg.max_awvalid_delay_time,   cfg.min_awvalid_delay_time);
         awvalid_delay_period = $urandom_range(cfg.max_awvalid_delay_period, cfg.min_awvalid_delay_period);
-        `uvm_info(get_name(), $sformatf("De-asserting 'awvalid' for (%0d) clock periods", awvalid_delay_time), UVM_HIGH)
+        `uvm_info(get_name(), $sformatf("INFO [AXI4] De-asserting 'awvalid' for (%0d) clock periods", awvalid_delay_time), UVM_HIGH)
         repeat (awvalid_delay_time) @(posedge vif.clk);
       end
       else begin
@@ -493,7 +539,7 @@ class vip_axi4_driver #(
         clock_counter       = 0;
         wvalid_delay_time   = $urandom_range(cfg.max_wvalid_delay_time,   cfg.min_wvalid_delay_time);
         wvalid_delay_period = $urandom_range(cfg.max_wvalid_delay_period, cfg.min_wvalid_delay_period);
-        `uvm_info(get_name(), $sformatf("De-asserting 'wvalid' for (%0d) clock periods", wvalid_delay_time), UVM_HIGH)
+        `uvm_info(get_name(), $sformatf("INFO [AXI4] De-asserting 'wvalid' for (%0d) clock periods", wvalid_delay_time), UVM_HIGH)
         repeat (wvalid_delay_time) @(posedge vif.clk);
       end
       else begin
@@ -573,7 +619,7 @@ class vip_axi4_driver #(
 
           wready_delay_time   = $urandom_range(cfg.max_wready_delay_time,   cfg.min_wready_delay_time);
           wready_delay_period = $urandom_range(cfg.max_wready_delay_period, cfg.min_wready_delay_period);
-          `uvm_info(get_name(), $sformatf("De-asserting 'wready' for (%0d) clock periods", wready_delay_time), UVM_HIGH)
+          `uvm_info(get_name(), $sformatf("INFO [AXI4] De-asserting 'wready' for (%0d) clock periods", wready_delay_time), UVM_HIGH)
           repeat (wready_delay_time) @(posedge vif.clk);
 
           vif.wready <= '1;
@@ -599,10 +645,12 @@ class vip_axi4_driver #(
 
     vif.arvalid <= '1;
     for (int i = 0; i < _req_queue.size(); i++) begin
+
       if (_req_queue[i].cfg.get_rd_response == TRUE) begin // Notify the monitor
         rd_request_port.write(_req_queue[i]);
         requested_responses++;
       end
+
       vif.arid     <= _req_queue[i].arid;
       vif.araddr   <= _req_queue[i].araddr;
       vif.arlen    <= _req_queue[i].arlen;
@@ -634,7 +682,7 @@ class vip_axi4_driver #(
         end
 
         rd_response_fifo.get(_response);
-        if (_response == null) begin `uvm_fatal(get_name(), $sformatf("NULL response from the Monitor")) end
+        if (_response == null) begin `uvm_fatal(get_name(), $sformatf("FATAL [AXI4] NULL response from the Monitor")) end
 
         if (received_responses == 0) begin
           rsp = _response;
@@ -750,7 +798,7 @@ class vip_axi4_driver #(
 
           rready_delay_time   = $urandom_range(cfg.max_rready_delay_time,   cfg.min_rready_delay_time);
           rready_delay_period = $urandom_range(cfg.max_rready_delay_period, cfg.min_rready_delay_period);
-          `uvm_info(get_name(), $sformatf("De-asserting 'rready' for (%0d) clock periods", rready_delay_time), UVM_HIGH)
+          `uvm_info(get_name(), $sformatf("INFO [AXI4] De-asserting 'rready' for (%0d) clock periods", rready_delay_time), UVM_HIGH)
           repeat (rready_delay_time) @(posedge vif.clk);
 
           vif.rready <= '1;
@@ -768,16 +816,17 @@ class vip_axi4_driver #(
   protected task get_memory_write_requests();
 
     vip_axi4_item #(CFG_P) wr_req;
+    logic unsigned [1 : 0] bresp = VIP_AXI4_RESP_OK_C;
 
-    int memory_start_index = 0;
-    int write_range        = 0;
-    int memory_stop_index  = 0;
-    int write_counter      = 0;
+    longint memory_start_index = 0;
+    int     write_range        = 0;
+    longint memory_stop_index  = 0;
+    int     write_counter      = 0;
     wr_req = new();
 
     if (_ev_monitor_wdata == null) begin
       // If not configured in build phase
-      `uvm_fatal(get_name(), $sformatf("Event object is not created"))
+      `uvm_fatal(get_name(), $sformatf("FATAL [AXI4] Event object is not created"))
     end
 
     forever begin
@@ -787,9 +836,9 @@ class vip_axi4_driver #(
       if (cfg.mem_enabled == TRUE) begin
 
         if (!$cast(wr_req, _ev_monitor_wdata.get_trigger_data())) begin
-          `uvm_fatal(get_name(), $sformatf("Casting write trigger data failed"))
+          `uvm_fatal(get_name(), $sformatf("FATAL [AXI4] Casting write trigger data failed"))
         end else if (wr_req == null) begin
-          `uvm_fatal(get_name(), $sformatf("Casting resulted in a NULL object"))
+          `uvm_fatal(get_name(), $sformatf("FATAL [AXI4] Casting resulted in a NULL object"))
         end
 
         _ev_monitor_wdata.reset();
@@ -799,24 +848,38 @@ class vip_axi4_driver #(
         memory_stop_index  = memory_start_index + write_range;
 
         // Collision detection
-        vif.bresp <= VIP_AXI4_RESP_OK_C;
+        bresp = VIP_AXI4_RESP_OK_C;
         if (_rdata_active == TRUE) begin
           if (wr_req.awaddr >= _current_araddr_start &&
               wr_req.awaddr + wr_req.awlen <= _current_araddr_stop) begin
-            `uvm_warning(get_name(), $sformatf("Collision detected: awaddr(%h), araddr(%h)", wr_req.awaddr, _current_araddr_start))
-            vif.bresp <= VIP_AXI4_RESP_SLVERR_C;
+            `uvm_warning(get_name(), $sformatf("WARNING [AXI4] Collision detected: awaddr(%h), araddr(%h)",
+            wr_req.awaddr, _current_araddr_start))
+            bresp = VIP_AXI4_RESP_SLVERR_C;
           end
         end
 
         if (memory_start_index > (_memory_depth-1) || memory_stop_index > _memory_depth) begin
-          `uvm_fatal(get_name(), $sformatf("MEM: Memory range undefined (%0d - %0d) > (%0d)", memory_start_index, memory_stop_index, _memory_depth))
+          `uvm_fatal(get_name(), $sformatf("FATAL [AXI4] Memory range undefined (%0d - %0d) > (%0d)",
+          memory_start_index, memory_stop_index, _memory_depth))
+        end
+
+        // If we are configured with write errors we might skip the write and return an error
+        if (cfg.mem_wr_error_prob != 0) begin
+          if (cfg.mem_wr_error_prob >= $urandom_range(100, 1)) begin
+            `uvm_warning(get_name(), $sformatf("WARNING [AXI4] A random write error occured"))
+            bresp = VIP_AXI4_RESP_SLVERR_C;
+          end
         end
 
         // Writing the data to memory
-        _mem.wr_axi4(wr_req.awaddr, wr_req.awlen, wr_req.wdata, wr_req.wstrb);
+        if (bresp == VIP_AXI4_RESP_OK_C) begin
+          _mem.wr_axi4(wr_req.awaddr, wr_req.awlen, wr_req.wdata, wr_req.wstrb);
+        end
+
       end
 
       if (cfg.bresp_enabled) begin
+        vif.bresp  <= bresp;
         vif.bid    <= wr_req.awid;
         vif.bvalid <= '1;
         @(posedge vif.clk);
@@ -836,10 +899,11 @@ class vip_axi4_driver #(
   protected task get_memory_read_requests();
 
     vip_axi4_item #(CFG_P) read_item;
-    int read_start_index;
-    int read_stop_index;
-    int read_range;
-    int mem_read_delay;
+    logic unsigned [1 : 0] rresp = VIP_AXI4_RESP_OK_C;
+    longint                read_start_index;
+    longint                read_stop_index;
+    int                    read_range;
+    int                    mem_read_delay;
 
     _rdata_active         = FALSE;
     _current_araddr_start = 0;
@@ -857,11 +921,20 @@ class vip_axi4_driver #(
       read_stop_index  = read_start_index + read_range;
 
       if (read_start_index > (_memory_depth-1) || read_stop_index > _memory_depth) begin
-        `uvm_fatal(get_name(), $sformatf("MEM: Memory range undefined (%0d - %0d)", read_start_index, read_stop_index))
+        `uvm_fatal(get_name(), $sformatf("FATAL [AXI4] Memory range undefined (%0d - %0d)",
+        read_start_index, read_stop_index))
+      end
+
+      // If we are configured with read errors we might skip the read and return an error
+      rresp = VIP_AXI4_RESP_OK_C;
+      if (cfg.mem_rd_error_prob != 0) begin
+        if (cfg.mem_rd_error_prob >= $urandom_range(100, 1)) begin
+          rresp = VIP_AXI4_RESP_SLVERR_C;
+        end
       end
 
       vif.rid   <= read_item.arid;
-      vif.rresp <= VIP_AXI4_RESP_OK_C;
+      vif.rresp <= rresp;
 
       if (cfg.rvalid_delay_enabled) begin
         fork
@@ -876,17 +949,29 @@ class vip_axi4_driver #(
       _current_araddr_start = read_item.araddr;
       _current_araddr_stop  = read_item.araddr + read_item.arlen;
 
-      for (int i = read_start_index; i < read_stop_index; i++) begin
+      if (rresp == VIP_AXI4_RESP_OK_C) begin
 
-        vif.rdata <= _mem.rd_index(i);
-        vif.rlast <= (i == read_stop_index-1);
+        for (longint i = read_start_index; i < read_stop_index; i++) begin
 
+          vif.rdata <= _mem.rd_index(i);
+          vif.rlast <= (i == read_stop_index-1);
+
+          @(posedge vif.clk);
+          while (!(vif.rvalid === '1 && vif.rready === '1)) begin
+            @(posedge vif.clk);
+          end
+
+          _current_araddr_start += CFG_P.VIP_AXI4_STRB_WIDTH_P;
+        end
+      end
+      else begin
+        `uvm_warning(get_name(), $sformatf("WARNING [AXI4] A random read error occured"))
+        vif.rdata <= ~vif.rdata;
+        vif.rlast <= '1;
         @(posedge vif.clk);
         while (!(vif.rvalid === '1 && vif.rready === '1)) begin
           @(posedge vif.clk);
         end
-
-        _current_araddr_start += CFG_P.VIP_AXI4_STRB_WIDTH_P;
       end
 
       if (cfg.rvalid_delay_enabled) begin
@@ -929,7 +1014,8 @@ class vip_axi4_driver #(
         clock_counter       = 0;
         rvalid_delay_time   = $urandom_range(cfg.max_rvalid_delay_time,   cfg.min_rvalid_delay_time);
         rvalid_delay_period = $urandom_range(cfg.max_rvalid_delay_period, cfg.min_rvalid_delay_period);
-        `uvm_info(get_name(), $sformatf("De-asserting 'rvalid' for (%0d) clock periods", rvalid_delay_time), UVM_HIGH)
+        `uvm_info(get_name(), $sformatf("INFO [AXI4] De-asserting 'rvalid' for (%0d) clock periods",
+        rvalid_delay_time), UVM_HIGH)
         repeat (rvalid_delay_time) @(posedge vif.clk);
       end
       else begin
@@ -950,7 +1036,7 @@ class vip_axi4_driver #(
 
     // Waiting for the OOO queue to contain items
     while (_araddr_queue.size() == 0) begin
-      repeat (10) @(posedge vif.clk);
+      @(posedge vif.clk);
     end
 
     // In-order bursts
@@ -1014,7 +1100,7 @@ class vip_axi4_driver #(
   // This function will set all data in the memory to zero
   // ---------------------------------------------------------------------------
   function void memory_reset();
-    `uvm_info(get_name(), "Resetting the memory", UVM_LOW)
+    `uvm_info(get_name(), "INFO [AXI4] Resetting the memory", UVM_LOW)
     _mem.reset();
   endfunction
 
@@ -1039,8 +1125,15 @@ class vip_axi4_driver #(
   // ---------------------------------------------------------------------------
   // This function returns data for an index in the memory array
   // ---------------------------------------------------------------------------
-  function logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] memory_read_index(int index);
+  function logic [CFG_P.VIP_AXI4_DATA_WIDTH_P-1 : 0] memory_read_index(longint index);
     memory_read_index = _mem.rd_index(index);
+  endfunction
+
+  // ---------------------------------------------------------------------------
+  // This function returns data for the entire memory
+  // ---------------------------------------------------------------------------
+  function mem_get_type_t memory_get();
+    return _mem.get();
   endfunction
 
 endclass

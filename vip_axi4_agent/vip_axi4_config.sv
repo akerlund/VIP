@@ -44,16 +44,20 @@ class vip_axi4_config extends uvm_object;
   // Memory Config
   // ---------------------------------------------------------------------------
 
-  vip_axi4_x_severity_t mem_x_wr_severity = VIP_AXI4_X_WR_IGNORE_E; // Allow writing X or not
+  vip_mem_x_severity_t mem_x_wr_severity = VIP_MEM_X_IGNORE_E; // Allow writing X or not
+  vip_mem_x_severity_t mem_x_rd_severity = VIP_MEM_X_IGNORE_E; // Severity for reading unwritten memory
 
   bool_t mem_enabled          = TRUE;
   bool_t mem_slave            = FALSE;
+  bool_t mem_rd_x_responses   = FALSE;
   int    mem_addr_width       = 0;
-  int    mem_awaddr_fifo_size = 0;   // Will cause backpressure
+  int    mem_awaddr_fifo_size = 0;   // Will cause backpressure (TODO: Not implemented)
   int    mem_araddr_fifo_size = 0;   // Will cause backpressure
   int    mem_ooo_queue_size   = 0;   // Out-of-order queue
   int    mem_min_read_delay   = 0.0; // Delay before a read response start
   int    mem_max_read_delay   = 0.0; //
+  int    mem_wr_error_prob    = 0;   // Probability any write response will be erroneous
+  int    mem_rd_error_prob    = 0;   // Probability any read response will be erroneous
 
   // ---------------------------------------------------------------------------
   // Delays on "xvalid" and "xready" signals.
@@ -87,45 +91,49 @@ class vip_axi4_config extends uvm_object;
   int    max_rvalid_delay_period  = 256;
 
   `uvm_object_utils_begin(vip_axi4_config);
-    `uvm_field_enum(uvm_active_passive_enum,  is_active,            UVM_ALL_ON)
-    `uvm_field_enum(vip_axi4_agent_type_t,    vip_axi4_agent_type,  UVM_ALL_ON)
-    `uvm_field_enum(bool_t,                   monitor_disabled,     UVM_ALL_ON)
-    `uvm_field_enum(bool_t,                   monitor_merge_reads,  UVM_ALL_ON)
-    `uvm_field_enum(bool_t,                   bresp_enabled,        UVM_ALL_ON)
-    `uvm_field_enum(vip_axi4_x_severity_t,    mem_x_wr_severity,    UVM_ALL_ON)
-    `uvm_field_enum(bool_t,                   mem_enabled,          UVM_ALL_ON)
-    `uvm_field_enum(bool_t,                   mem_slave,            UVM_ALL_ON)
-    `uvm_field_int(mem_addr_width,                                  UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(mem_awaddr_fifo_size,                            UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(mem_araddr_fifo_size,                            UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(mem_ooo_queue_size,                              UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(mem_min_read_delay,                              UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(mem_max_read_delay,                              UVM_ALL_ON | UVM_DEC)
-    `uvm_field_enum(bool_t,                  awvalid_delay_enabled, UVM_ALL_ON)
-    `uvm_field_int(min_awvalid_delay_time,                          UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(max_awvalid_delay_time,                          UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(min_awvalid_delay_period,                        UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(max_awvalid_delay_period,                        UVM_ALL_ON | UVM_DEC)
-    `uvm_field_enum(bool_t,                   wvalid_delay_enabled, UVM_ALL_ON)
-    `uvm_field_int(min_wvalid_delay_time,                           UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(max_wvalid_delay_time,                           UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(min_wvalid_delay_period,                         UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(max_wvalid_delay_period,                         UVM_ALL_ON | UVM_DEC)
-    `uvm_field_enum(bool_t,                   wready_delay_enabled, UVM_ALL_ON)
-    `uvm_field_int(min_wready_delay_time,                           UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(max_wready_delay_time,                           UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(min_wready_delay_period,                         UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(max_wready_delay_period,                         UVM_ALL_ON | UVM_DEC)
-    `uvm_field_enum(bool_t,                   rready_delay_enabled, UVM_ALL_ON)
-    `uvm_field_int(min_rready_delay_time,                           UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(max_rready_delay_time,                           UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(min_rready_delay_period,                         UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(max_rready_delay_period,                         UVM_ALL_ON | UVM_DEC)
-    `uvm_field_enum(bool_t,                   rvalid_delay_enabled, UVM_ALL_ON)
-    `uvm_field_int(min_rvalid_delay_time,                           UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(max_rvalid_delay_time,                           UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(min_rvalid_delay_period,                         UVM_ALL_ON | UVM_DEC)
-    `uvm_field_int(max_rvalid_delay_period,                         UVM_ALL_ON | UVM_DEC)
+  `uvm_field_enum(uvm_active_passive_enum,  is_active,            UVM_ALL_ON)
+  `uvm_field_enum(vip_axi4_agent_type_t,    vip_axi4_agent_type,  UVM_ALL_ON)
+  `uvm_field_enum(bool_t,                   monitor_disabled,     UVM_ALL_ON)
+  `uvm_field_enum(bool_t,                   monitor_merge_reads,  UVM_ALL_ON)
+  `uvm_field_enum(bool_t,                   bresp_enabled,        UVM_ALL_ON)
+  `uvm_field_enum(vip_mem_x_severity_t,     mem_x_wr_severity,    UVM_ALL_ON)
+  `uvm_field_enum(vip_mem_x_severity_t,     mem_x_rd_severity,    UVM_ALL_ON)
+  `uvm_field_enum(bool_t,                   mem_enabled,          UVM_ALL_ON)
+  `uvm_field_enum(bool_t,                   mem_slave,            UVM_ALL_ON)
+  `uvm_field_enum(bool_t,                   mem_rd_x_responses,   UVM_ALL_ON)
+  `uvm_field_int(mem_addr_width,                                  UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(mem_awaddr_fifo_size,                            UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(mem_araddr_fifo_size,                            UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(mem_ooo_queue_size,                              UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(mem_min_read_delay,                              UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(mem_max_read_delay,                              UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(mem_wr_error_prob,                               UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(mem_rd_error_prob,                               UVM_ALL_ON | UVM_DEC)
+  `uvm_field_enum(bool_t,                  awvalid_delay_enabled, UVM_ALL_ON)
+  `uvm_field_int(min_awvalid_delay_time,                          UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(max_awvalid_delay_time,                          UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(min_awvalid_delay_period,                        UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(max_awvalid_delay_period,                        UVM_ALL_ON | UVM_DEC)
+  `uvm_field_enum(bool_t,                   wvalid_delay_enabled, UVM_ALL_ON)
+  `uvm_field_int(min_wvalid_delay_time,                           UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(max_wvalid_delay_time,                           UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(min_wvalid_delay_period,                         UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(max_wvalid_delay_period,                         UVM_ALL_ON | UVM_DEC)
+  `uvm_field_enum(bool_t,                   wready_delay_enabled, UVM_ALL_ON)
+  `uvm_field_int(min_wready_delay_time,                           UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(max_wready_delay_time,                           UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(min_wready_delay_period,                         UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(max_wready_delay_period,                         UVM_ALL_ON | UVM_DEC)
+  `uvm_field_enum(bool_t,                   rready_delay_enabled, UVM_ALL_ON)
+  `uvm_field_int(min_rready_delay_time,                           UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(max_rready_delay_time,                           UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(min_rready_delay_period,                         UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(max_rready_delay_period,                         UVM_ALL_ON | UVM_DEC)
+  `uvm_field_enum(bool_t,                   rvalid_delay_enabled, UVM_ALL_ON)
+  `uvm_field_int(min_rvalid_delay_time,                           UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(max_rvalid_delay_time,                           UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(min_rvalid_delay_period,                         UVM_ALL_ON | UVM_DEC)
+  `uvm_field_int(max_rvalid_delay_period,                         UVM_ALL_ON | UVM_DEC)
   `uvm_object_utils_end;
 
   function new(string name = "vip_axi4_config");

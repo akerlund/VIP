@@ -54,7 +54,11 @@ package vip_axi4_types_pkg;
   localparam logic unsigned [2 : 0] VIP_AXI4_SIZE_64B_C       = 3'b110;
   localparam logic unsigned [2 : 0] VIP_AXI4_SIZE_128B_C      = 3'b111;
 
-  typedef enum {
+  // ---------------------------------------------------------------------------
+  // VIP AXI4 types
+  // ---------------------------------------------------------------------------
+
+  typedef enum logic {
     VIP_AXI4_MASTER_AGENT_E,
     VIP_AXI4_SLAVE_AGENT_E
   } vip_axi4_agent_type_t;
@@ -67,33 +71,27 @@ package vip_axi4_types_pkg;
     int VIP_AXI4_USER_WIDTH_P;
   } vip_axi4_cfg_t;
 
-  typedef enum {
+  typedef enum logic [1 : 0] {
     VIP_AXI4_WR_REQUEST_E,
     VIP_AXI4_RD_REQUEST_E,
     VIP_AXI4_RD_RESPONSE_E
   } vip_axi4_access_t;
 
-  typedef enum {
+  typedef enum logic {
     VIP_AXI4_ID_COUNTER_E,
     VIP_AXI4_ID_RANDOM_E
   } vip_axi4_id_type_t;
 
-  typedef enum {
+  typedef enum logic [1 : 0] {
     VIP_AXI4_DATA_COUNTER_E,
     VIP_AXI4_DATA_RANDOM_E,
     VIP_AXI4_DATA_CUSTOM_E
   } vip_axi4_data_type_t;
 
-  typedef enum {
+  typedef enum logic {
     VIP_AXI4_STRB_ALL_E,
     VIP_AXI4_STRB_RANDOM_E
   } vip_axi4_strb_t;
-
-  typedef enum {
-    VIP_AXI4_X_WR_IGNORE_E,
-    VIP_AXI4_X_WR_WARNING_E,
-    VIP_AXI4_X_WR_FATAL_E
-  } vip_axi4_x_severity_t;
 
   typedef enum logic [2 : 0] {
     VIP_AXI4_SIZE_1_BYTE_E    = VIP_AXI4_SIZE_1B_C,
@@ -154,7 +152,9 @@ package vip_axi4_types_pkg;
     VIP_AXI4_MEM_SIZE_1TB_E   = 40
   } vip_axi4_memory_size_t;
 
-
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
   function automatic vip_axi4_size_t size_as_enum(int burst_size);
     case (burst_size)
       1:       return VIP_AXI4_SIZE_1_BYTE_E;
@@ -169,7 +169,9 @@ package vip_axi4_types_pkg;
     endcase
   endfunction
 
-
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
   function automatic int burst_size_as_integer(vip_axi4_size_t burst_size);
     case (burst_size)
       VIP_AXI4_SIZE_1_BYTE_E:    return 1;
@@ -183,7 +185,9 @@ package vip_axi4_types_pkg;
     endcase
   endfunction
 
-
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
   function automatic int burst_as_integer(vip_axi4_burst_t burst_type);
     case (burst_type)
       VIP_AXI4_BURST_FIXED_E:    return VIP_AXI4_BURST_FIXED_C;

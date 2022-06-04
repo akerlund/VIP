@@ -40,7 +40,7 @@ class vip_axi4_sequencer #(
     objections_count = objection.get_objection_count(this);
     if (objections_count > 0) begin
       objection.drop_objection(this, $sformatf("Dropping (%0d) objections at reset", objections_count), objections_count);
-      `uvm_info(get_name(), $sformatf("Dropping (%0d) objections at reset", objections_count), UVM_LOW)
+      `uvm_info(get_name(), $sformatf("INFO [AXI4] Dropping (%0d) objections at reset", objections_count), UVM_LOW)
     end
 
     start_phase_sequence(phase);

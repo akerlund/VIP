@@ -30,6 +30,8 @@ class vip_axi4_monitor #(
   uvm_analysis_port     #(vip_axi4_item #(CFG_P)) bresp_port;
   uvm_analysis_port     #(vip_axi4_item #(CFG_P)) araddr_port;
   uvm_analysis_port     #(vip_axi4_item #(CFG_P)) rdata_port;
+  uvm_tlm_analysis_fifo #(vip_axi4_item #(CFG_P)) wr_request_fifo;
+  uvm_analysis_port     #(vip_axi4_item #(CFG_P)) wr_response_port;
   uvm_tlm_analysis_fifo #(vip_axi4_item #(CFG_P)) rd_request_fifo;
   uvm_analysis_port     #(vip_axi4_item #(CFG_P)) rd_response_port;
 
@@ -42,9 +44,14 @@ class vip_axi4_monitor #(
   vip_axi4_config cfg;
 
   // Driver's read address channel items: expected response to sequence
-  protected vip_axi4_item #(CFG_P) _driver_item;
-  protected vip_axi4_item #(CFG_P) _driver_items [int][$];
-  protected int                    _nr_of_driver_items;
+  protected vip_axi4_item #(CFG_P) _driver_rd_item;
+  protected vip_axi4_item #(CFG_P) _driver_rd_items [int][$];
+  protected int                    _nr_of_driver_rd_items;
+
+  // Driver's write address channel items: expected response to sequence
+  protected vip_axi4_item #(CFG_P) _driver_wr_item;
+  protected vip_axi4_item #(CFG_P) _driver_wr_items [int][$];
+  protected int                    _nr_of_driver_wr_items;
 
   // Events to the Driver and sequence
   protected string    _ev_id = "";
@@ -76,6 +83,8 @@ class vip_axi4_monitor #(
     bresp_port       = new("bresp_port",       this);
     araddr_port      = new("araddr_port",      this);
     rdata_port       = new("rdata_port",       this);
+    wr_request_fifo  = new("wr_request_fifo",  this);
+    wr_response_port = new("wr_response_port", this);
     rd_request_fifo  = new("rd_request_fifo",  this);
     rd_response_port = new("rd_response_port", this);
   endfunction
@@ -88,7 +97,7 @@ class vip_axi4_monitor #(
     super.build_phase(phase);
 
     if (!uvm_config_db #(virtual vip_axi4_if #(CFG_P))::get(this, "", "vif", vif)) begin
-      `uvm_fatal("NOVIF", {"Virtual interface must be set for: ", get_full_name(), ".vif"});
+      `uvm_fatal("NOVIF", {"FATAL [AXI4] Virtual interface must be set for: ", get_full_name(), ".vif"});
     end
 
     if (cfg.vip_axi4_agent_type == VIP_AXI4_SLAVE_AGENT_E && cfg.mem_slave == TRUE) begin
@@ -136,9 +145,12 @@ class vip_axi4_monitor #(
     _wuser_beats.delete();
     _rdata_beats.delete();
     _ruser_beats.delete();
-    _driver_items.delete();
+    _driver_wr_items.delete();
+    _driver_rd_items.delete();
+    wr_request_fifo.flush();
     rd_request_fifo.flush();
-    _nr_of_driver_items = 0;
+    _nr_of_driver_wr_items = 0;
+    _nr_of_driver_rd_items = 0;
     if (cfg.vip_axi4_agent_type == VIP_AXI4_SLAVE_AGENT_E && cfg.mem_slave == TRUE) begin
       _ev_monitor_wdata.reset();
       _ev_monitor_araddr.reset();
@@ -153,7 +165,9 @@ class vip_axi4_monitor #(
     vip_axi4_item #(CFG_P) awaddr_item;
     vip_axi4_item #(CFG_P) wdata_item;
     vip_axi4_item #(CFG_P) bresp_item;
-    int beat_counter = 0;
+    int                    channel_id;
+    int                    beat_counter = 0;
+    int                    driver_awid;
 
     forever begin
 
@@ -186,7 +200,15 @@ class vip_axi4_monitor #(
         $cast(awaddr_item, awaddr_item.clone());
         _awaddr_items.push_back(awaddr_item);
 
-        `uvm_info(get_name(), $sformatf("Collected Write Address Channel:\n%s", awaddr_item.sprint()), UVM_HIGH)
+        `uvm_info(get_name(), $sformatf("INFO [AXI4] Collected Write Address Channel:\n%s", awaddr_item.sprint()), UVM_HIGH)
+
+        // This read transaction's response is requested by a sequence
+        if (!wr_request_fifo.is_empty()) begin
+          wr_request_fifo.get(_driver_wr_item);
+          driver_awid = int'(_driver_wr_item.awid);
+          _driver_wr_items[driver_awid].push_back(_driver_wr_item);
+          _nr_of_driver_wr_items++;
+        end
       end
 
       // -----------------------------------------------------------------------
@@ -203,11 +225,13 @@ class vip_axi4_monitor #(
         wdata_item = _awaddr_items.pop_front();
 
         if (wdata_item == null) begin
-          `uvm_fatal(get_name(), $sformatf("Fetched NULL object from the awaddr queue"))
+          `uvm_fatal(get_name(), $sformatf("FATAL [AXI4] Fetched NULL object from the awaddr queue"))
         end
 
         if (wdata_item.awlen+1 != _wdata_beats.size()) begin
-          `uvm_warning(get_name(), $sformatf("Transaction length mismatch: awlen(%0d)+1 != #beats(%0d)", wdata_item.awlen+1, _wdata_beats.size()))
+          `uvm_error(get_name(), $sformatf(
+          "ERROR [AXI4] Transaction length mismatch: awlen+1 != #beats (%0d != %0d)",
+          wdata_item.awlen+1, _wdata_beats.size()))
         end
 
         wdata_item.wdata = new[_wdata_beats.size()];
@@ -234,12 +258,25 @@ class vip_axi4_monitor #(
       // Write Response Channel
       // -----------------------------------------------------------------------
       if (vif.bvalid === '1 && vif.bready === '1) begin
+
         $cast(bresp_item, wdata_item.clone());
         bresp_item.bid   = vif.bid;
         bresp_item.bresp = vif.bresp;
         bresp_item.buser = vif.buser;
         `uvm_info(get_name(), $sformatf("Collected Write Response Channel:\n%s", bresp_item.sprint()), UVM_HIGH)
         bresp_port.write(bresp_item);
+
+        // Checking if the driver has registered any ID's that should be forwarded back
+        if (cfg.vip_axi4_agent_type == VIP_AXI4_MASTER_AGENT_E && cfg.is_active == UVM_ACTIVE) begin
+          if (_nr_of_driver_wr_items != 0) begin
+            channel_id = int'(vif.bid);
+            if (_driver_wr_items.exists(channel_id) && _driver_wr_items[channel_id].size() != 0) begin
+              void'(_driver_wr_items[channel_id].pop_front());
+              wr_response_port.write(bresp_item);
+              _nr_of_driver_wr_items--;
+            end
+          end
+        end
       end
 
     end
@@ -294,10 +331,10 @@ class vip_axi4_monitor #(
 
         // This read transaction's response is requested by a sequence
         if (!rd_request_fifo.is_empty()) begin
-          rd_request_fifo.get(_driver_item);
-          driver_arid = int'(_driver_item.arid);
-          _driver_items[driver_arid].push_back(_driver_item);
-          _nr_of_driver_items++;
+          rd_request_fifo.get(_driver_rd_item);
+          driver_arid = int'(_driver_rd_item.arid);
+          _driver_rd_items[driver_arid].push_back(_driver_rd_item);
+          _nr_of_driver_rd_items++;
         end
 
       end
@@ -318,17 +355,30 @@ class vip_axi4_monitor #(
 
             channel_id = int'(vif.rid);
             if (!_araddr_items.exists(channel_id)) begin
-              `uvm_fatal(get_name(), $sformatf("Collected rid (%0d = %0h) which cannot be associated with any arid", channel_id, channel_id))
+              `uvm_fatal(get_name(), $sformatf(
+              "FATAL [AXI4] Collected rid (%0d = %0h) which cannot be associated with any arid",
+              channel_id, channel_id))
             end
 
             rdata_item = _araddr_items[channel_id].pop_front();
 
             if (rdata_item == null) begin
-              `uvm_fatal(get_name(), $sformatf("Fetched NULL object with rid (%0d = %0h)", channel_id, channel_id))
+              `uvm_fatal(get_name(), $sformatf(
+              "FATAL [AXI4] Fetched NULL object with rid (%0d = %0h)",
+              channel_id, channel_id))
             end
 
             if (rdata_item.arlen+1 != _rdata_beats.size()) begin
-              `uvm_warning(get_name(), $sformatf("Transaction length mismatch: arlen(%0d)+1 != #beats(%0d)", rdata_item.arlen+1, _rdata_beats.size()))
+              if (vif.rresp === '0) begin
+                `uvm_error(get_name(), $sformatf(
+                "ERROR [AXI4] Transaction length mismatch: arlen+1 != #beats (%0d != %0d)",
+                rdata_item.arlen+1, _rdata_beats.size()))
+              end
+              else begin
+                `uvm_warning(get_name(), $sformatf(
+                "WARNING [AXI4] Transaction length mismatch: arlen+1 != #beats (%0d != %0d)",
+                rdata_item.arlen+1, _rdata_beats.size()))
+              end
             end
           end
 
@@ -349,11 +399,11 @@ class vip_axi4_monitor #(
 
           // Checking if the driver has registered any ID's that should be forwarded back
           if (cfg.vip_axi4_agent_type == VIP_AXI4_MASTER_AGENT_E && cfg.is_active == UVM_ACTIVE) begin
-            if (_nr_of_driver_items != 0) begin
-              if (_driver_items.exists(channel_id) && _driver_items[channel_id].size() != 0) begin
-                void'(_driver_items[channel_id].pop_front());
+            if (_nr_of_driver_rd_items != 0) begin
+              if (_driver_rd_items.exists(channel_id) && _driver_rd_items[channel_id].size() != 0) begin
+                void'(_driver_rd_items[channel_id].pop_front());
                 rd_response_port.write(rdata_item);
-                _nr_of_driver_items--;
+                _nr_of_driver_rd_items--;
               end
             end
           end
