@@ -6,7 +6,6 @@ MAKE_ROOT?=$(shell git rev-parse --show-toplevel)
 
 # Defaults
 RUN_DIR?=$(shell pwd)/rundir
-PYRG_DIR?=$(shell pwd)/pyrg
 UVM_TR_RECORD?=UVM_HIGH
 UVM_VERBOSITY?=LOW
 VIV_OOC?=1
@@ -89,7 +88,7 @@ zynq:
 	@$(RUN_ZYNQ) $(MAKE_ROOT) $(COMPILE_SH) $(RUN_DIR) $(GUI)
 
 pyrg:
-	@$(RUN_PYRG) $(PYRG_DIR)
+	@$(RUN_PYRG)
 
 verilate:
 	@$(RUN_VERILATOR) $(COMPILE_SH) $(RUN_DIR)
