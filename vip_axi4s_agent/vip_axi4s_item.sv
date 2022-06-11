@@ -105,8 +105,10 @@ class vip_axi4s_item #(
 
   constraint con_tstrb_val {
     if (cfg.axi4s_tstrb == VIP_AXI4S_TSTRB_ALL_E) {
-      foreach (tstrb[i]) {
-        tstrb[i] == {CFG_P.VIP_AXI4S_TSTRB_WIDTH_P{1'b1}};
+      if (CFG_P.VIP_AXI4S_TSTRB_WIDTH_P > 0) {
+        foreach (tstrb[i]) {
+          tstrb[i] == {CFG_P.VIP_AXI4S_TSTRB_WIDTH_P{1'b1}};
+        }
       }
     } else {
       foreach (tstrb[i]) {
