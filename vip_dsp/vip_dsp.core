@@ -1,0 +1,14 @@
+CAPI=2:
+name: "akerlund::vip_dsp:0"
+description: "UVM DSP verification package"
+
+filesets:
+  tb:
+    files:
+      - vip_iir_pkg.sv
+    file_type: systemVerilogSource
+
+targets:
+  default:
+    filesets:
+      - tb

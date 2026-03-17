@@ -1,0 +1,29 @@
+CAPI=2:
+name: "akerlund::vip_axi4s_agent:0"
+description: "UVM AXI4-Stream verification agent"
+
+filesets:
+  tb:
+    files:
+      # Compilation unit: entry point compiled directly by the simulator
+      - vip_axi4s_agent.svh
+      # Include files: accessed via +incdir+ (included by the .svh or tb packages)
+      - vip_axi4s_types_pkg.sv: {is_include_file: true}
+      - vip_axi4s_if.sv: {is_include_file: true}
+      - vip_axi4s_item_config.sv: {is_include_file: true}
+      - vip_axi4s_item.sv: {is_include_file: true}
+      - vip_axi4s_config.sv: {is_include_file: true}
+      - vip_axi4s_driver.sv: {is_include_file: true}
+      - vip_axi4s_monitor.sv: {is_include_file: true}
+      - vip_axi4s_sequencer.sv: {is_include_file: true}
+      - vip_axi4s_seq_lib.sv: {is_include_file: true}
+      - vip_axi4s_agent_pkg.sv: {is_include_file: true}
+      - vip_axi4s_agent.sv: {is_include_file: true}
+    file_type: systemVerilogSource
+    depend:
+      - "akerlund::vip_bool:0"
+
+targets:
+  default:
+    filesets:
+      - tb
