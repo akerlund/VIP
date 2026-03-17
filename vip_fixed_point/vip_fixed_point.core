@@ -1,0 +1,14 @@
+CAPI=2:
+name: "akerlund::vip_fixed_point:0"
+description: "UVM fixed-point arithmetic verification package"
+
+filesets:
+  tb:
+    files:
+      - vip_fixed_point_pkg.sv
+    file_type: systemVerilogSource
+
+targets:
+  default:
+    filesets:
+      - tb

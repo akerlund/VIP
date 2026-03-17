@@ -1,0 +1,14 @@
+CAPI=2:
+name: "akerlund::vip_math:0"
+description: "UVM math verification package"
+
+filesets:
+  tb:
+    files:
+      - vip_math_pkg.sv
+    file_type: systemVerilogSource
+
+targets:
+  default:
+    filesets:
+      - tb

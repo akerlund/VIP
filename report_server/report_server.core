@@ -1,0 +1,18 @@
+CAPI=2:
+name: "akerlund::vip_report_server:0"
+description: "UVM report server"
+
+filesets:
+  tb:
+    files:
+      # Compilation unit: compiled directly by the simulator
+      - report_server.svh
+      # Include files: accessed via +incdir+ (included by report_server.svh)
+      - report_server_pkg.sv: {is_include_file: true}
+      - report_server.sv: {is_include_file: true}
+    file_type: systemVerilogSource
+
+targets:
+  default:
+    filesets:
+      - tb
